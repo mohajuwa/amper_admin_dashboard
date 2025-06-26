@@ -1,0 +1,58 @@
+{
+  "created_at": "2025",
+  "description": "Reusable Laravel Blade Components Structure",
+  "components": {
+    "tables": [
+      "generic-list-table",
+      "responsive-data-table",
+      "mobile-cards-table",
+      "table-header",
+      "table-actions"
+    ],
+    "forms": [
+      "generic-search-form",
+      "filter-form",
+      "bulk-actions"
+    ],
+    "cards": [
+      "info-card",
+      "stat-card",
+      "mobile-record-card"
+    ],
+    "badges": [
+      "status-badge",
+      "popularity-badge",
+      "generic-badge"
+    ],
+    "buttons": [
+      "action-buttons",
+      "crud-buttons",
+      "filter-buttons"
+    ],
+    "layouts": [
+      "page-wrapper",
+      "content-section",
+      "header-section"
+    ],
+    "form-fields": [
+      "text-input",
+      "number-input",
+      "select-input",
+      "date-input",
+      "checkbox-input",
+      "textarea-input",
+      "file-input"
+    ],
+    "widgets": [
+      "pagination-widget",
+      "loading-spinner",
+      "no-data-widget",
+      "confirmation-modal"
+    ],
+    "scripts": [
+      "generic-table-manager",
+      "form-validator",
+      "ajax-handler"
+    ]
+  }
+}

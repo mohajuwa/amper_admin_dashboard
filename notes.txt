@@ -1,0 +1,1028 @@
+I have sub services routes inside admin , I make for it , pages and controller and model , so depeinding on 
+routes and controller and pages , make the for service via year the same strucured ...
+
+note it hase prefix : Route::prefix('admin')->name('admin.')->middleware('isAdmin')->group(function () {
+
+});
+
+here is the routes for sub services:
+[
+        // Sub Services
+    Route::prefix('sub_services')->name('sub_service.')->group(function () {
+        Route::get('/', [SubServiceController::class, 'list'])->name('list');
+        Route::get('create', [SubServiceController::class, 'add'])->name('create');
+        Route::post('store', [SubServiceController::class, 'insert'])->name('store');
+        Route::get('{id}/edit', [SubServiceController::class, 'edit'])->name('edit');
+        Route::put('{id}', [SubServiceController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [SubServiceController::class, 'delete'])->name('delete');
+        Route::post('get-by-service', [SubServiceController::class, 'getSubCategory'])->name('get-by-service');
+        Route::patch('{id}/toggle-status', [SubServiceController::class, 'toggleStatus'])->name('toggle-status');
+    });
+]
+
+
+and here is the Servic via year:
+[
+    
+    // Servic via year
+    Route::prefix('service-via-years')->name('service_via_year.')->group(function () {
+        Route::get('/', [ServiceViaYearController::class, 'list'])->name('list');
+        Route::get('create', [ServiceViaYearController::class, 'add'])->name('create');
+        Route::post('store', [ServiceViaYearController::class, 'insert'])->name('store');
+        Route::get('{id}/edit', [ServiceViaYearController::class, 'edit'])->name('edit');
+        Route::put('{id}', [ServiceViaYearController::class, 'update'])->name('update');
+        Route::delete('{id}', [ServiceViaYearController::class, 'delete'])->name('delete');
+    });
+
+]
+
+
+
+controller : 
+[
+
+
+                            <?php
+
+                        namespace App\Http\Controllers\Admin;
+
+                        use App\Http\Controllers\Controller;
+                        use App\Models\Service;
+                        use App\Models\SubService;
+                        use Illuminate\Http\Request;
+                        use Illuminate\Support\Facades\Log;
+
+                        class SubServiceController extends Controller
+                        {
+                            private const STATUS_ACTIVE = 0;
+                            private const STATUS_INACTIVE = 1;
+                            private const STATUS_DELETED = 2;
+
+                            public function list()
+                            {
+                                return view('admin.sub_service.list', [
+                                    'header_title' => 'الخدمات الفرعية',
+                                    'getRecord' => SubService::getRecord()
+                                ]);
+                            }
+
+                            public function add()
+                            {
+                                return view('admin.sub_service.add', [
+                                    'header_title' => 'إضافة خدمة فرعية',
+                                    'getServices' => Service::getAllServices()
+                                ]);
+                            }
+
+                            public function edit($id)
+                            {
+                                $subService = SubService::getSingle($id);
+
+                                if (!$subService) {
+                                    return redirect()->route('admin.sub_service.list')
+                                        ->with('error', 'الخدمة الفرعية غير موجودة');
+                                }
+
+                                return view('admin.sub_service.edit', [
+                                    'header_title' => 'تعديل الخدمة الفرعية',
+                                    'getRecord' => $subService,
+                                    'getServices' => Service::getRecord()
+                                ]);
+                            }
+
+                            public function insert(Request $request)
+                            {
+                                $validatedData = $this->validateSubServiceData($request);
+
+                                try {
+                                    $subService = new SubService();
+                                    $this->fillSubServiceData($subService, $validatedData, $request);
+                                    $subService->save();
+
+                                    return $this->respondSuccess($request, 'تم إنشاء الخدمة الفرعية بنجاح', $subService);
+                                } catch (\Exception $e) {
+                                    return $this->handleError($request, $e, 'حدث خطأ أثناء إنشاء الخدمة الفرعية');
+                                }
+                            }
+
+                            public function update(Request $request, $id)
+                            {
+                                $validatedData = $this->validateSubServiceData($request);
+
+                                try {
+                                    $subService = SubService::getSingle($id);
+
+                                    if (!$subService) {
+                                        return $this->respondNotFound($request, 'الخدمة الفرعية غير موجودة');
+                                    }
+
+                                    $this->fillSubServiceData($subService, $validatedData, $request);
+                                    $subService->save();
+
+                                    return $this->respondSuccess($request, 'تم تحديث الخدمة الفرعية بنجاح', $subService);
+                                } catch (\Exception $e) {
+                                    return $this->handleError($request, $e, 'حدث خطأ أثناء تحديث الخدمة الفرعية');
+                                }
+                            }
+
+                            public function delete(Request $request, $id)
+                            {
+                                try {
+                                    $subService = SubService::getSingle($id);
+
+                                    if (!$subService) {
+                                        return response()->json([
+                                            'success' => false,
+                                            'message' => 'الخدمة الفرعية غير موجودة'
+                                        ], 404);
+                                    }
+
+                                    $subService->update(['status' => self::STATUS_DELETED]);
+
+                                    return response()->json([
+                                        'success' => true,
+                                        'message' => 'تم حذف الخدمة الفرعية بنجاح',
+                                        'redirect' => route('admin.sub_service.list')
+                                    ]);
+                                } catch (\Exception $e) {
+                                    Log::error('SubService deletion error: ' . $e->getMessage());
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => 'حدث خطأ أثناء حذف الخدمة الفرعية'
+                                    ], 500);
+                                }
+                            }
+
+                            public function restore(Request $request, $id)
+                            {
+                                try {
+                                    $subService = SubService::getSingle($id);
+
+                                    if (!$subService) {
+                                        return $this->respondNotFound($request, 'الخدمة الفرعية غير موجودة');
+                                    }
+
+                                    $subService->update(['status' => self::STATUS_ACTIVE]);
+
+                                    return $this->respondSuccess($request, 'تم استعادة الخدمة الفرعية بنجاح', $subService);
+                                } catch (\Exception $e) {
+                                    return $this->handleError($request, $e, 'حدث خطأ أثناء استعادة الخدمة الفرعية');
+                                }
+                            }
+
+                            public function changeStatus(Request $request, $id)
+                            {
+                                $request->validate(['status' => 'required|in:0,1,2']);
+
+                                try {
+                                    $subService = SubService::getSingle($id);
+
+                                    if (!$subService) {
+                                        return response()->json([
+                                            'success' => false,
+                                            'message' => 'الخدمة الفرعية غير موجودة'
+                                        ], 404);
+                                    }
+
+                                    $subService->update(['status' => (int) $request->status]);
+
+                                    $statusText = [
+                                        self::STATUS_ACTIVE => 'نشط',
+                                        self::STATUS_INACTIVE => 'غير نشط',
+                                        self::STATUS_DELETED => 'محذوف'
+                                    ];
+
+                                    return response()->json([
+                                        'success' => true,
+                                        'message' => 'تم تغيير حالة الخدمة الفرعية إلى: ' . $statusText[$request->status],
+                                        'data' => [
+                                            'sub_service_id' => $subService->sub_service_id,
+                                            'status' => $subService->status,
+                                            'status_text' => $statusText[$request->status]
+                                        ]
+                                    ]);
+                                } catch (\Exception $e) {
+                                    Log::error('SubService status change error: ' . $e->getMessage());
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => 'حدث خطأ أثناء تغيير حالة الخدمة الفرعية'
+                                    ], 500);
+                                }
+                            }
+
+                            public function getStats()
+                            {
+                                try {
+                                    $stats = [
+                                        'total' => SubService::count(),
+                                        'active' => SubService::where('status', self::STATUS_ACTIVE)->count(),
+                                        'inactive' => SubService::where('status', self::STATUS_INACTIVE)->count(),
+                                        'deleted' => SubService::where('status', self::STATUS_DELETED)->count(),
+                                    ];
+
+                                    return response()->json(['success' => true, 'data' => $stats]);
+                                } catch (\Exception $e) {
+                                    Log::error('SubService stats error: ' . $e->getMessage());
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => 'حدث خطأ أثناء جلب الإحصائيات'
+                                    ], 500);
+                                }
+                            }
+
+                            public function bulkAction(Request $request)
+                            {
+                                $request->validate([
+                                    'action' => 'required|in:activate,deactivate,delete,restore',
+                                    'ids' => 'required|array|min:1',
+                                    'ids.*' => 'required|integer|exists:sub_services,sub_service_id'
+                                ]);
+
+                                try {
+                                    $statusMap = [
+                                        'activate' => self::STATUS_ACTIVE,
+                                        'deactivate' => self::STATUS_INACTIVE,
+                                        'delete' => self::STATUS_DELETED,
+                                        'restore' => self::STATUS_ACTIVE
+                                    ];
+
+                                    $count = SubService::whereIn('sub_service_id', $request->ids)
+                                        ->update(['status' => $statusMap[$request->action]]);
+
+                                    $messages = [
+                                        'activate' => "تم تفعيل {$count} خدمة فرعية بنجاح",
+                                        'deactivate' => "تم إلغاء تفعيل {$count} خدمة فرعية بنجاح",
+                                        'delete' => "تم حذف {$count} خدمة فرعية بنجاح",
+                                        'restore' => "تم استعادة {$count} خدمة فرعية بنجاح"
+                                    ];
+
+                                    return response()->json([
+                                        'success' => true,
+                                        'message' => $messages[$request->action]
+                                    ]);
+                                } catch (\Exception $e) {
+                                    Log::error('Bulk action error: ' . $e->getMessage());
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => 'حدث خطأ أثناء تنفيذ العملية'
+                                    ], 500);
+                                }
+                            }
+
+                            public function getSubServices(Request $request)
+                            {
+                                try {
+                                    $serviceId = $request->id;
+                                    $subServices = SubService::getRecordByService($serviceId);
+                                    $html = '<option value="">اختر الخدمة الفرعية</option>';
+
+                                    foreach ($subServices as $subService) {
+                                        $name = is_array($subService->name)
+                                            ? ($subService->name['ar'] ?? $subService->name['en'])
+                                            : $subService->name;
+                                        $html .= '<option value="' . $subService->sub_service_id . '">' . $name . '</option>';
+                                    }
+
+                                    return response()->json([
+                                        'success' => true,
+                                        'html' => $html
+                                    ]);
+                                } catch (\Exception $e) {
+                                    Log::error('Get sub services error: ' . $e->getMessage());
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => 'حدث خطأ أثناء جلب الخدمات الفرعية'
+                                    ], 500);
+                                }
+                            }
+
+                            private function validateSubServiceData(Request $request)
+                            {
+                                return $request->validate([
+                                    'name_ar' => 'required|string|max:255',
+                                    'name_en' => 'required|string|max:255',
+                                    'service_id' => 'required|exists:services,service_id',
+                                    'price' => 'required|numeric|min:0',
+                                    'status' => 'required|in:0,1,2'
+                                ], [
+                                    'name_ar.required' => 'اسم الخدمة الفرعية باللغة العربية مطلوب',
+                                    'name_en.required' => 'اسم الخدمة الفرعية باللغة الإنجليزية مطلوب',
+                                    'service_id.required' => 'الخدمة الرئيسية مطلوبة',
+                                    'service_id.exists' => 'الخدمة الرئيسية غير موجودة',
+                                    'price.required' => 'السعر مطلوب',
+                                    'price.numeric' => 'السعر يجب أن يكون رقم',
+                                    'price.min' => 'السعر يجب أن يكون أكبر من أو يساوي صفر',
+                                    'status.required' => 'حالة الخدمة الفرعية مطلوبة',
+                                ]);
+                            }
+
+                            private function fillSubServiceData($subService, $validatedData, $request)
+                            {
+                                // Store name as array instead of JSON
+                                $subService->name = [
+                                    'ar' => trim($validatedData['name_ar']),
+                                    'en' => trim($validatedData['name_en'])
+                                ];
+
+                                $subService->service_id = (int) $validatedData['service_id'];
+                                $subService->price = (float) $validatedData['price'];
+                                $subService->status = (int) $validatedData['status'];
+                            }
+
+                            private function respondSuccess($request, $message, $subService)
+                            {
+                                if ($request->ajax()) {
+                                    return response()->json([
+                                        'success' => true,
+                                        'message' => $message,
+                                        'redirect' => route('admin.sub_service.list'),
+                                        'data' => [
+                                            'sub_service_id' => $subService->sub_service_id,
+                                            'name' => $subService->name,
+                                            'service_id' => $subService->service_id,
+                                            'price' => $subService->price,
+                                            'status' => $subService->status
+                                        ]
+                                    ]);
+                                }
+
+                                return redirect()->route('admin.sub_service.list')->with('success', $message);
+                            }
+
+                            private function respondNotFound($request, $message)
+                            {
+                                if ($request->ajax()) {
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => $message
+                                    ], 404);
+                                }
+
+                                return redirect()->route('admin.sub_service.list')->with('error', $message);
+                            }
+
+                            private function handleError($request, $exception, $message)
+                            {
+                                Log::error($message . ': ' . $exception->getMessage());
+
+                                if ($request->ajax()) {
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => $message . ': ' . $exception->getMessage()
+                                    ], 500);
+                                }
+
+                                return redirect()->back()
+                                    ->withInput()
+                                    ->with('error', $message);
+                            }
+                        }
+
+]
+
+
+
+model : 
+[
+                <?php
+
+            namespace App\Models;
+
+            use Illuminate\Database\Eloquent\Factories\HasFactory;
+            use Illuminate\Database\Eloquent\Model;
+
+            class SubService extends Model
+            {
+                use HasFactory;
+
+                protected $table = 'sub_services';
+                protected $primaryKey = 'sub_service_id';
+
+                protected $fillable = [
+                    'service_id',
+                    'name',
+                    'price',
+                    'status',
+                ];
+
+                protected $casts = [
+                    'name' => 'array',
+                    'price' => 'decimal:2',
+                    'status' => 'integer', // Change from 'boolean' to 'integer'
+                    'created_at' => 'datetime',
+                    'updated_at' => 'datetime',
+                ];
+                // Relationship with Service
+                public function service()
+                {
+                    return $this->belongsTo(Service::class, 'service_id', 'service_id');
+                }
+
+                // Relationship with ServiceNotes
+                public function notes()
+                {
+                    return $this->hasMany(ServiceNote::class, 'sub_service_id', 'sub_service_id');
+                }
+                public static function getRecord()
+                {
+                    $query = self::select('sub_services.*', 'services.service_name as service_name')
+                        ->join('services', 'services.service_id', '=', 'sub_services.service_id');
+
+                    // Filter by sub_service_id
+                    if (request()->get('sub_service_id')) {
+                        $query = $query->where('sub_services.sub_service_id', request()->get('sub_service_id'));
+                    }
+
+                    // Filter by sub_service_name (normal or JSON)
+                    if (request()->get('sub_service_name')) {
+                        $searchTerm = request()->get('sub_service_name');
+                        $query = $query->where(function ($q) use ($searchTerm) {
+                            $q->where('sub_services.name', 'LIKE', '%' . $searchTerm . '%')
+                                ->orWhereRaw("JSON_EXTRACT(sub_services.name, '$.ar') LIKE ?", ['%' . $searchTerm . '%'])
+                                ->orWhereRaw("JSON_EXTRACT(sub_services.name, '$.en') LIKE ?", ['%' . $searchTerm . '%']);
+                        });
+                    }
+
+                    // Filter by parent service ID
+                    if (request()->get('service_id')) {
+                        $query = $query->where('sub_services.service_id', request()->get('service_id'));
+                    }
+
+                    // Filter by status
+                    if (request()->get('status') !== null && request()->get('status') !== '') {
+                        $query = $query->where('sub_services.status', request()->get('status'));
+                    }
+
+                    // Filter by from date
+                    if (request()->get('from_date')) {
+                        $query = $query->whereDate('sub_services.created_at', '>=', request()->get('from_date'));
+                    }
+
+                    // Optional: to_date (not in your current form but easy to add)
+                    if (request()->get('to_date')) {
+                        $query = $query->whereDate('sub_services.created_at', '<=', request()->get('to_date'));
+                    }
+
+                    return $query->orderBy('sub_services.sub_service_id', 'desc')
+                        ->paginate(50);
+                }
+
+
+            public function getNameForLang($lang)
+            {
+                $name = $this->getRawOriginal('name');
+                
+                if (is_string($name)) {
+                    $decoded = json_decode($name, true);
+                    if (is_array($decoded) && isset($decoded[$lang])) {
+                        return $decoded[$lang];
+                    }
+                }
+                
+                return '';
+            }
+
+            // 2. UPDATE the getNameAttribute method in SubService.php:
+            public function getNameAttribute($value)
+            {
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    if (is_array($decoded)) {
+                        // Return based on current locale, fallback to Arabic, then English
+                        $locale = app()->getLocale();
+                        return $decoded[$locale] ?? $decoded['ar'] ?? $decoded['en'] ?? $value;
+                    }
+                }
+                return $value;
+            }
+
+
+
+                public static function getRecordByService($service_id)
+                {
+                    return self::select('sub_services.*')
+                        ->where('sub_services.status', '=', 1) // Active sub-services
+                        ->where('sub_services.service_id', '=', $service_id)
+                        ->orderBy('sub_services.name', 'asc')
+                        ->get();
+                }
+
+                public static function getRecordActive()
+                {
+                    return self::select('sub_services.*', 'services.service_name as service_name')
+                        ->join('services', 'services.service_id', '=', 'sub_services.service_id')
+                        ->where('sub_services.status', '=', 0)
+                        ->where('services.status', '=', 0)
+                        ->orderBy('sub_services.name', 'asc')
+                        ->get();
+                }
+
+                public static function getSingle($id)
+                {
+                    return self::where('sub_service_id', $id)->first();
+                }
+
+                public static function getSingleByName($name, $service_id = null)
+                {
+                    $query = self::where('name', 'like', '%"' . $name . '"%')
+                        ->where('sub_services.status', '=', 1);
+
+                    if ($service_id) {
+                        $query->where('service_id', $service_id);
+                    }
+
+                    return $query->first();
+                }
+
+                public function totalNotes()
+                {
+                    return $this->notes()->count();
+                }
+
+                // Accessor to get name as string if it's multilingual JSON
+
+                // Mutator to store name as JSON if needed
+                public function setNameAttribute($value)
+                {
+                    if (is_array($value)) {
+                        $this->attributes['name'] = json_encode($value);
+                    } else {
+                        $this->attributes['name'] = $value;
+                    }
+                }
+
+                // Get formatted price
+                public function getFormattedPriceAttribute()
+                {
+                    return number_format($this->price, 2);
+                }
+            }
+]
+
+
+
+and here is the list blade page of sub services :
+[
+                @extends('admin.layouts.app')
+
+            @section('content')
+                <section class="content-header">
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h1 class="m-0">قائمة الخدمات الفرعية</h1>
+                            <a href="{{ route('admin.sub_service.create') }}" class="btn btn-sm btn-primary">إضافة خدمة فرعية جديدة</a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12">
+
+                                {{-- Search Form --}}
+                                <form action="" method="get">
+                                    <div class="card card-info">
+                                        <div class="card-header">
+                                            <h3 class="card-title">البحث في الخدمات الفرعية</h3>
+                                        </div>
+                                        <div class="card-body" style="overflow:auto">
+                                            <div class="row">
+                                                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                                    <div class="form-group">
+                                                        <label>المعرف</label>
+                                                        <input type="text" name="sub_service_id"
+                                                            value="{{ Request::get('sub_service_id') }}" class="form-control"
+                                                            placeholder="معرف الخدمة الفرعية">
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                                    <div class="form-group">
+                                                        <label>اسم الخدمة الفرعية</label>
+                                                        <input type="text" name="sub_service_name"
+                                                            value="{{ Request::get('sub_service_name') }}" class="form-control"
+                                                            placeholder="اسم الخدمة الفرعية">
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                                    <div class="form-group">
+                                                        <label>الخدمة الرئيسية</label>
+                                                        <select name="service_id" class="form-control">
+                                                            <option value="">جميع الخدمات</option>
+                                                            @foreach (\App\Models\Service::getAllServices() as $service)
+                                                                @php
+                                                                    $serviceName = is_array($service->service_name)
+                                                                        ? $service->service_name['ar'] ??
+                                                                            $service->service_name['en']
+                                                                        : $service->service_name;
+
+                                                                    $serviceNameEn = is_array($service->service_name)
+                                                                        ? $service->service_name['en'] ??
+                                                                            $service->service_name['ar']
+                                                                        : $service->service_name;
+                                                                @endphp
+                                                                <option value="{{ $service->service_id }}"
+                                                                    {{ Request::get('service_id') == $service->service_id ? 'selected' : '' }}>
+                                                                    {{ $serviceName }} - {{ $serviceNameEn }}
+
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                                    <div class="form-group">
+                                                        <label>الحالة</label>
+                                                        <select name="status" class="form-control">
+                                                            <option value="">جميع الحالات</option>
+                                                            <option value="1"
+                                                                {{ Request::get('status') == '1' ? 'selected' : '' }}>نشط</option>
+                                                            <option value="0"
+                                                                {{ Request::get('status') == '0' ? 'selected' : '' }}>غير نشط</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                                    <div class="form-group">
+                                                        <label>من تاريخ</label>
+                                                        <input type="date" name="from_date" value="{{ Request::get('from_date') }}"
+                                                            class="form-control">
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="col-lg-1 col-md-4 col-sm-6 col-4 d-flex align-items-center justify-content-center">
+                                                    <div class="form-group w-100">
+                                                        <button class="btn btn-info btn-block mb-2">
+                                                            <i class="fas fa-search"></i>
+                                                        </button>
+                                                        <a href="{{ route('admin.sub_service.list') }}" class="btn btn-info btn-block">
+                                                            <i class="fas fa-redo"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                {{-- Sub Service Table --}}
+                                <div class="card card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">قائمة الخدمات الفرعية (المجموع: {{ $getRecord->total() }})</h3>
+                                    </div>
+                                    <div id="table-container">
+                                        <div class="card-body p-0">
+                                            {{-- Desktop Table --}}
+                                            <div class="d-none d-lg-block">
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped table-bordered mb-0">
+                                                        <thead class="text-center bg-light">
+                                                            <tr>
+                                                                <th>#</th>
+                                                                <th>اسم الخدمة الفرعية</th>
+                                                                <th>اسم الخدمة الفرعية إنجليزي</th>
+                                                                <th>الخدمة الرئيسية</th>
+                                                                <th>السعر</th>
+                                                                <th>الحالة</th>
+                                                                <th>تاريخ الإنشاء</th>
+                                                                <th>الإجراء</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="text-center">
+                                                            @forelse ($getRecord as $value)
+                                                                @php
+                                                                    $sub_service_name = 'غير متوفر';
+                                                                    $sub_service_name_en = 'غير متوفر';
+
+                                                                    $rawName = $value->getAttributes()['name'];
+
+                                                                    if (is_string($rawName)) {
+                                                                        $decoded_name = json_decode($rawName, true);
+
+                                                                        if (is_array($decoded_name)) {
+                                                                            $sub_service_name = $decoded_name['ar'] ?? 'غير متوفر';
+                                                                            $sub_service_name_en =
+                                                                                $decoded_name['en'] ?? 'غير متوفر';
+                                                                        } else {
+                                                                            $sub_service_name = $rawName;
+                                                                        }
+                                                                    }
+
+                                                                    // Get service name
+                                                                    $service_name = $value->service_name ?? 'غير متوفر';
+                                                                @endphp
+
+                                                                <tr>
+                                                                    <td>{{ $value->sub_service_id }}</td>
+                                                                    <td>{{ $sub_service_name }}</td>
+                                                                    <td>{{ $sub_service_name_en }}</td>
+                                                                    <td>
+                                                                        @if ($service_name && $service_name != 'غير متوفر')
+                                                                            @php
+                                                                                $serviceDisplayName = $service_name;
+                                                                                if (is_string($service_name)) {
+                                                                                    $decoded_service = json_decode(
+                                                                                        $service_name,
+                                                                                        true,
+                                                                                    );
+                                                                                    if (is_array($decoded_service)) {
+                                                                                        $serviceDisplayName =
+                                                                                            $decoded_service['ar'] ??
+                                                                                            ($decoded_service['en'] ??
+                                                                                                $service_name);
+                                                                                    }
+                                                                                }
+                                                                            @endphp
+                                                                            <span
+                                                                                class="badge badge-info">{{ $serviceDisplayName }}</span>
+                                                                        @else
+                                                                            <span class="text-muted">غير محدد</span>
+                                                                        @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        @if ($value->price != 0)
+                                                                            <span
+                                                                                class="badge badge-success">{{ number_format($value->price, 2) }}
+                                                                                ر.س</span>
+                                                                        @else
+                                                                            <span
+                                                                                class="badge badge-warning">{{ number_format($value->price, 2) }}
+                                                                                ر.س</span>
+                                                                        @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        @php $actualStatus = $value->getAttributes()['status']; @endphp
+                                                                        @if ($actualStatus == 0)
+                                                                            <span class="badge badge-success px-3 py-2">
+                                                                                <i class="fas fa-check-circle mr-1"></i>نشط
+                                                                            </span>
+                                                                        @elseif ($actualStatus == 1)
+                                                                            <span class="badge badge-secondary px-3 py-2">
+                                                                                <i class="fas fa-pause-circle mr-1"></i>غير نشط
+                                                                            </span>
+                                                                        @elseif ($actualStatus == 2)
+                                                                            <span class="badge badge-danger px-3 py-2">
+                                                                                <i class="fas fa-times-circle mr-1"></i>محذوف
+                                                                            </span>
+                                                                        @else
+                                                                            <span class="badge badge-warning px-3 py-2">
+                                                                                <i class="fas fa-question-circle mr-1"></i>غير معروف
+                                                                            </span>
+                                                                        @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="text-sm">
+                                                                            <div class="font-weight-bold">
+                                                                                {{ \Carbon\Carbon::parse($value->created_at)->locale('ar')->translatedFormat('j F Y') }}
+                                                                            </div>
+                                                                            <div class="text-muted">
+                                                                                {{ \Carbon\Carbon::parse($value->created_at)->format('g:i A') }}
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="action-buttons">
+                                                                            <a href="{{ route('admin.sub_service.edit', $value->sub_service_id) }}"
+                                                                                class="btn-action btn-edit" title="تعديل">
+                                                                                <i class="fas fa-edit"></i>
+                                                                            </a>
+                                                                            <a href="javascript:void(0)"
+                                                                                class="btn-action btn-delete btnDelete"
+                                                                                data-id="{{ $value->sub_service_id }}" title="حذف">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </a>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            @empty
+                                                                <tr>
+                                                                    <td colspan="8" class="text-center py-4">
+                                                                        <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                                                                        <p class="text-muted">لا توجد خدمات فرعية متاحة حالياً.</p>
+                                                                    </td>
+                                                                </tr>
+                                                            @endforelse
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            {{-- Mobile Cards --}}
+                                            <div class="d-lg-none">
+                                                @forelse ($getRecord as $value)
+                                                    @php
+                                                        $sub_service_name = 'غير متوفر';
+                                                        $sub_service_name_en = 'غير متوفر';
+
+                                                        $rawName = $value->getAttributes()['name'];
+
+                                                        if (is_string($rawName)) {
+                                                            $decoded_name = json_decode($rawName, true);
+
+                                                            if (is_array($decoded_name)) {
+                                                                $sub_service_name = $decoded_name['ar'] ?? 'غير متوفر';
+                                                                $sub_service_name_en = $decoded_name['en'] ?? 'غير متوفر';
+                                                            } else {
+                                                                $sub_service_name = $rawName;
+                                                            }
+                                                        }
+
+                                                        // Get service name
+                                                        $service_name = $value->service_name ?? 'غير متوفر';
+                                                        $serviceDisplayName = $service_name;
+                                                        if (is_string($service_name)) {
+                                                            $decoded_service = json_decode($service_name, true);
+                                                            if (is_array($decoded_service)) {
+                                                                $serviceDisplayName =
+                                                                    $decoded_service['ar'] ??
+                                                                    ($decoded_service['en'] ?? $service_name);
+                                                            }
+                                                        }
+                                                    @endphp
+
+                                                    <div class="card mb-3 mx-3">
+                                                        <div class="card-body">
+                                                            <div class="row">
+                                                                <div class="col-2 text-center">
+                                                                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                                        style="width: 40px; height: 40px;">
+                                                                        <i class="fas fa-cog"></i>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-7">
+                                                                    <h6 class="card-title mb-1">{{ $sub_service_name }}</h6>
+                                                                    <p class="text-muted small mb-1">{{ $sub_service_name_en }}</p>
+                                                                    <p class="text-muted small mb-0">
+                                                                        <i class="fas fa-hashtag"></i> {{ $value->sub_service_id }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-3 text-right">
+                                                                    @if ($actualStatus == 0)
+                                                                        <span class="badge badge-success d-block mb-1">
+                                                                            <i class="fas fa-check-circle"></i> نشط
+                                                                        </span>
+                                                                    @elseif ($actualStatus == 1)
+                                                                        <span class="badge badge-secondary d-block mb-1">
+                                                                            <i class="fas fa-pause-circle"></i> غير نشط
+                                                                        </span>
+                                                                    @elseif ($actualStatus == 2)
+                                                                        <span class="badge badge-danger d-block mb-1">
+                                                                            <i class="fas fa-times-circle"></i> محذوف
+                                                                        </span>
+                                                                    @else
+                                                                        <span class="badge badge-warning d-block mb-1">
+                                                                            <i class="fas fa-question-circle"></i> غير معروف
+                                                                        </span>
+                                                                    @endif
+
+                                                                    <small
+                                                                        class="text-success font-weight-bold">{{ number_format($value->price, 2) }}
+                                                                        ر.س</small>
+                                                                </div>
+                                                    
+                                                            </div>
+
+                                                            <div class="row mt-2">
+                                                                <div class="col-12">
+                                                                    <small class="text-info">
+                                                                        <i class="fas fa-layer-group"></i> {{ $serviceDisplayName }}
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row mt-1">
+                                                                <div class="col-12">
+                                                                    <small class="text-muted">
+                                                                        <i class="fas fa-calendar"></i>
+                                                                        {{ \Carbon\Carbon::parse($value->created_at)->locale('ar')->translatedFormat('j F Y') }}
+                                                                        {{ \Carbon\Carbon::parse($value->created_at)->format('g:i A') }}
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row mt-3">
+                                                                <div class="col-12 text-center">
+                                                                    <a href="{{ route('admin.sub_service.edit', $value->sub_service_id) }}"
+                                                                        class="btn btn-primary btn-sm mx-1" style="min-width: 70px;">
+                                                                        <i class="fas fa-edit"></i> تعديل
+                                                                    </a>
+                                                                    <a href="javascript:void(0)"
+                                                                        class="btn btn-danger btn-sm mx-1 btnDelete"
+                                                                        data-id="{{ $value->sub_service_id }}"
+                                                                        style="min-width: 70px;">
+                                                                        <i class="fas fa-trash"></i> حذف
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @empty
+                                                    <div class="text-center py-5">
+                                                        <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                                                        <p class="text-muted">لا توجد خدمات فرعية متاحة حالياً.</p>
+                                                    </div>
+                                                @endforelse
+                                            </div>
+
+                                            {{-- Pagination --}}
+                                            <div class="card-footer">
+                                                <div class="d-flex justify-content-center">
+                                                    {!! $getRecord->appends(request()->except('page'))->links() !!}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            @endsection
+
+            @section('script')
+                <script type="text/javascript">
+                    $('body').delegate('.btnDelete', 'click', function() {
+                        let button = $(this);
+                        const confirmMessage = 'هل أنت متأكد من حذف هذه الخدمة الفرعية؟';
+
+                        if (typeof showCustomConfirm === 'function') {
+                            showCustomConfirm(confirmMessage, function() {
+                                subServiceDelete(button);
+                            }, 'تأكيد العملية');
+                        } else {
+                            if (confirm(confirmMessage)) {
+                                subServiceDelete(button);
+                            }
+                        }
+                    });
+
+                    function subServiceDelete(button) {
+                        const subServiceId = button.data('id');
+
+                        $.ajax({
+                            type: "POST",
+                            url: "{{ url('admin/sub_services/delete') }}/" + subServiceId,
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                            },
+                            dataType: "json",
+                            beforeSend: function() {
+                                button.prop('disabled', true)
+                                    .html('<i class="fas fa-spinner fa-spin"></i>');
+                            },
+                            success: function(data) {
+                                if (data.success) {
+                                    $('#table-container').load(location.href + ' #table-container > *');
+                                    if (typeof showSuccess === 'function') {
+                                        showSuccess('تم حذف الخدمة الفرعية بنجاح');
+                                    } else {
+                                        alert('تم حذف الخدمة الفرعية بنجاح');
+                                    }
+                                } else {
+                                    const errorMsg = 'حدث خطأ: ' + (data.message || 'فشل أثناء حذف الخدمة الفرعية');
+                                    if (typeof showError === 'function') {
+                                        showError(errorMsg);
+                                    } else {
+                                        alert(errorMsg);
+                                    }
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                const errorMsg = 'حدث خطأ أثناء الاتصال بالخادم: ' + error;
+                                if (typeof showError === 'function') {
+                                    showError(errorMsg);
+                                } else {
+                                    alert(errorMsg);
+                                }
+                            },
+                            complete: function() {
+                                button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                            }
+                        });
+                    }
+                </script>
+            @endsection
+
+]
+
+
+I am sorry , the table name in db is (product_by_car) not wervice via year , so you can modfy it as it should ..
+and here is the table create command result for it :
+[
+
+            Table	Create table
+            product_by_car	CREATE TABLE `product_by_car` (
+            `product_id` int(11) NOT NULL AUTO_INCREMENT,
+            `model_id` int(11) DEFAULT NULL,
+            `service_id` int(11) NOT NULL,
+            `sub_service_id` int(11) DEFAULT NULL,
+            `status` int(11) NOT NULL DEFAULT 0,
+            `year` int(11) DEFAULT NULL,
+            PRIMARY KEY (`product_id`),
+            KEY `model_id` (`model_id`),
+            KEY `sub_service_id` (`sub_service_id`),
+            CONSTRAINT `product_by_car_ibfk_1` FOREIGN KEY (`model_id`) REFERENCES `car_models` (`model_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+            CONSTRAINT `product_by_car_ibfk_2` FOREIGN KEY (`sub_service_id`) REFERENCES `sub_services` (`sub_service_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+            ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
+]   

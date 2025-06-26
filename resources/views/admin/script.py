@@ -1,0 +1,1562 @@
+#!/usr/bin/env python3
+"""
+Script to fill Laravel Blade components with reusable code
+Run this after creating the structure with create_structure.py
+"""
+
+import os
+
+def create_file(path, content):
+    """Create a file with the given content"""
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"✓ Created: {path}")
+    except Exception as e:
+        print(f"❌ Error creating {path}: {str(e)}")
+
+def fill_components():
+    """Fill all component files with reusable code"""
+    
+    print("🔧 Filling components with reusable code...")
+    print("=" * 50)
+    
+    # COMPONENTS - TABLES
+    
+    # Generic List Table
+    create_file("partials/components/tables/generic-list-table.blade.php", '''{{-- Generic List Table Component --}}
+@props([
+    'records',
+    'columns' => [],
+    'actions' => [],
+    'tableId' => 'generic-table',
+    'tableClass' => 'table table-striped table-bordered mb-0',
+    'headerClass' => 'text-center bg-light',
+    'bodyClass' => 'text-center',
+    'noDataMessage' => 'لا توجد بيانات متاحة حالياً.',
+    'noDataIcon' => 'fas fa-info-circle',
+    'emptyColspan' => null,
+    'showMobileCards' => true
+])
+
+<div class="card card-info">
+    @if(isset($title))
+        <div class="card-header">
+            <h3 class="card-title">{{ $title }} (المجموع: {{ $records->total() }})</h3>
+        </div>
+    @endif
+    
+    <div id="{{ $tableId }}-container">
+        <div class="card-body p-0">
+            {{-- Desktop Table --}}
+            <div class="d-none d-lg-block">
+                <div class="table-responsive">
+                    <table class="{{ $tableClass }}" id="{{ $tableId }}">
+                        <thead class="{{ $headerClass }}">
+                            <tr>
+                                @foreach($columns as $column)
+                                    <th>{{ $column['label'] ?? $column }}</th>
+                                @endforeach
+                                @if(!empty($actions))
+                                    <th>الإجراء</th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody class="{{ $bodyClass }}">
+                            @forelse ($records as $record)
+                                <tr>
+                                    @foreach($columns as $key => $column)
+                                        <td>
+                                            @if(isset($column['component']))
+                                                @include($column['component'], ['record' => $record, 'value' => $record->{$column['field'] ?? $key}])
+                                            @elseif(isset($column['field']))
+                                                {{ $record->{$column['field']} }}
+                                            @else
+                                                {{ $record->{$key} }}
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                    
+                                    @if(!empty($actions))
+                                        <td>
+                                            @include('admin.partials.components.buttons.action-buttons', [
+                                                'record' => $record,
+                                                'actions' => $actions
+                                            ])
+                                        </td>
+                                    @endif
+                                </tr>
+                            @empty
+                                @include('admin.partials.widgets.no-data-widget', [
+                                    'colspan' => $emptyColspan ?? (count($columns) + (!empty($actions) ? 1 : 0)),
+                                    'icon' => $noDataIcon,
+                                    'message' => $noDataMessage
+                                ])
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- Mobile Cards --}}
+            @if($showMobileCards)
+                @include('admin.partials.components.cards.mobile-record-card', [
+                    'records' => $records,
+                    'columns' => $columns,
+                    'actions' => $actions,
+                    'noDataIcon' => $noDataIcon,
+                    'noDataMessage' => $noDataMessage
+                ])
+            @endif
+
+            {{-- Pagination --}}
+            @include('admin.partials.widgets.pagination-widget', ['records' => $records])
+        </div>
+    </div>
+</div>''')
+
+    # Responsive Data Table
+    create_file("partials/components/tables/responsive-data-table.blade.php", '''{{-- Responsive Data Table with Auto-Detection --}}
+@props([
+    'records',
+    'config' => [],
+    'tableId' => 'responsive-table'
+])
+
+@php
+    // Auto-detect columns if not provided
+    if (empty($config['columns']) && $records->count() > 0) {
+        $firstRecord = $records->first();
+        $config['columns'] = collect($firstRecord->getAttributes())->keys()->take(6)->mapWithKeys(function($key) {
+            return [$key => ['label' => ucfirst(str_replace('_', ' ', $key)), 'field' => $key]];
+        })->toArray();
+    }
+@endphp
+
+@include('admin.partials.components.tables.generic-list-table', [
+    'records' => $records,
+    'columns' => $config['columns'] ?? [],
+    'actions' => $config['actions'] ?? [],
+    'tableId' => $tableId,
+    'title' => $config['title'] ?? null,
+    'noDataMessage' => $config['noDataMessage'] ?? 'لا توجد بيانات متاحة حالياً.',
+    'noDataIcon' => $config['noDataIcon'] ?? 'fas fa-info-circle'
+])''')
+
+    # Mobile Cards Table
+    create_file("partials/components/cards/mobile-record-card.blade.php", '''{{-- Mobile Record Cards --}}
+@props([
+    'records',
+    'columns' => [],
+    'actions' => [],
+    'noDataMessage' => 'لا توجد بيانات متاحة حالياً.',
+    'noDataIcon' => 'fas fa-info-circle',
+    'cardClass' => 'card mb-3 mx-3'
+])
+
+<div class="d-lg-none">
+    @forelse ($records as $record)
+        <div class="{{ $cardClass }}">
+            <div class="card-body">
+                {{-- Card Header with Primary Info --}}
+                <div class="row mb-2">
+                    @foreach(array_slice($columns, 0, 3) as $key => $column)
+                        <div class="col-{{ 12 / min(3, count($columns)) }}">
+                            @if(isset($column['component']))
+                                @include($column['component'], ['record' => $record, 'value' => $record->{$column['field'] ?? $key}])
+                            @else
+                                <small class="text-muted">{{ $column['label'] ?? $key }}</small>
+                                <div class="font-weight-bold">
+                                    {{ $record->{$column['field'] ?? $key} }}
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Secondary Info --}}
+                @if(count($columns) > 3)
+                    <div class="row mb-2">
+                        @foreach(array_slice($columns, 3) as $key => $column)
+                            <div class="col-6">
+                                <small class="text-muted">{{ $column['label'] ?? $key }}:</small>
+                                @if(isset($column['component']))
+                                    @include($column['component'], ['record' => $record, 'value' => $record->{$column['field'] ?? $key}])
+                                @else
+                                    <span class="ml-1">{{ $record->{$column['field'] ?? $key} }}</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Actions --}}
+                @if(!empty($actions))
+                    <div class="row mt-3">
+                        <div class="col-12 text-center">
+                            @include('admin.partials.components.buttons.action-buttons', [
+                                'record' => $record,
+                                'actions' => $actions,
+                                'isMobile' => true
+                            ])
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @empty
+        @include('admin.partials.widgets.no-data-widget', [
+            'icon' => $noDataIcon,
+            'message' => $noDataMessage,
+            'wrapperClass' => 'text-center py-5'
+        ])
+    @endforelse
+</div>''')
+
+    # COMPONENTS - FORMS
+    
+    # Generic Search Form
+    create_file("partials/components/forms/generic-search-form.blade.php", '''{{-- Generic Search Form --}}
+@props([
+    'fields' => [],
+    'action' => '',
+    'method' => 'get',
+    'title' => 'البحث',
+    'resetRoute' => null,
+    'cardClass' => 'card card-info',
+    'bodyClass' => 'card-body',
+    'submitText' => 'بحث',
+    'resetText' => 'إعادة تعيين'
+])
+
+<form action="{{ $action }}" method="{{ strtolower($method) }}">
+    @if(strtolower($method) !== 'get')
+        @csrf
+    @endif
+    
+    <div class="{{ $cardClass }}">
+        <div class="card-header">
+            <h3 class="card-title">{{ $title }}</h3>
+        </div>
+        <div class="{{ $bodyClass }}">
+            <div class="row">
+                @foreach($fields as $field)
+                    @include('admin.partials.form-fields.' . ($field['type'] ?? 'text-input'), $field)
+                @endforeach
+                
+                {{-- Action Buttons --}}
+                <div class="col-lg-1 col-md-4 col-sm-6 col-4 d-flex align-items-center justify-content-center">
+                    <div class="form-group w-100">
+                        <button type="submit" class="btn btn-info btn-block mb-2">
+                            <i class="fas fa-search"></i> {{ $submitText }}
+                        </button>
+                        @if($resetRoute)
+                            <a href="{{ $resetRoute }}" class="btn btn-secondary btn-block">
+                                <i class="fas fa-redo"></i> {{ $resetText }}
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>''')
+
+    # COMPONENTS - BADGES
+    
+    # Generic Badge
+    create_file("partials/components/badges/generic-badge.blade.php", '''{{-- Generic Badge Component --}}
+@props([
+    'value',
+    'type' => 'info',
+    'icon' => null,
+    'mappings' => [],
+    'class' => '',
+    'size' => 'normal'
+])
+
+@php
+    $badgeClass = 'badge';
+    $badgeText = $value;
+    $badgeIcon = $icon;
+    
+    // Apply mappings if provided
+    if (!empty($mappings) && isset($mappings[$value])) {
+        $mapping = $mappings[$value];
+        $type = $mapping['type'] ?? $type;
+        $badgeText = $mapping['text'] ?? $badgeText;
+        $badgeIcon = $mapping['icon'] ?? $badgeIcon;
+    }
+    
+    // Size classes
+    $sizeClass = match($size) {
+        'sm' => 'badge-sm',
+        'lg' => 'badge-lg px-3 py-2',
+        default => 'px-3 py-2'
+    };
+    
+    // Type classes
+    $typeClass = match($type) {
+        'success' => 'badge-success',
+        'danger' => 'badge-danger',
+        'warning' => 'badge-warning',
+        'info' => 'badge-info',
+        'primary' => 'badge-primary',
+        'secondary' => 'badge-secondary',
+        'light' => 'badge-light',
+        'dark' => 'badge-dark',
+        default => 'badge-info'
+    };
+    
+    $finalClass = "{$badgeClass} {$typeClass} {$sizeClass} {$class}";
+@endphp
+
+<span class="{{ $finalClass }}">
+    @if($badgeIcon)
+        <i class="{{ $badgeIcon }} mr-1"></i>
+    @endif
+    {{ $badgeText }}
+</span>''')
+
+    # Status Badge
+    create_file("partials/components/badges/status-badge.blade.php", '''{{-- Status Badge Component --}}
+@props([
+    'status',
+    'field' => 'status',
+    'mappings' => null,
+    'size' => 'normal'
+])
+
+@php
+    // Default status mappings
+    $defaultMappings = [
+        1 => ['type' => 'success', 'text' => 'نشط', 'icon' => 'fas fa-check-circle'],
+        0 => ['type' => 'secondary', 'text' => 'غير نشط', 'icon' => 'fas fa-pause-circle'],
+        2 => ['type' => 'danger', 'text' => 'محذوف', 'icon' => 'fas fa-times-circle'],
+        'active' => ['type' => 'success', 'text' => 'نشط', 'icon' => 'fas fa-check-circle'],
+        'inactive' => ['type' => 'secondary', 'text' => 'غير نشط', 'icon' => 'fas fa-pause-circle'],
+        'deleted' => ['type' => 'danger', 'text' => 'محذوف', 'icon' => 'fas fa-times-circle'],
+        'expired' => ['type' => 'warning', 'text' => 'منتهي الصلاحية', 'icon' => 'fas fa-clock']
+    ];
+    
+    $statusMappings = $mappings ?? $defaultMappings;
+    $statusValue = is_object($status) ? $status->{$field} : $status;
+@endphp
+
+@include('admin.partials.components.badges.generic-badge', [
+    'value' => $statusValue,
+    'mappings' => $statusMappings,
+    'size' => $size
+])''')
+
+    # COMPONENTS - BUTTONS
+    
+    # Action Buttons
+    create_file("partials/components/buttons/action-buttons.blade.php", '''{{-- Action Buttons Component --}}
+@props([
+    'record',
+    'actions' => [],
+    'isMobile' => false,
+    'idField' => 'id',
+    'statusField' => 'status'
+])
+
+@php
+    $recordId = $record->{$idField} ?? null;
+    $recordStatus = $record->{$statusField} ?? null;
+    $isDeleted = (int) $recordStatus === 2;
+    
+    // Default actions if none provided
+    if (empty($actions)) {
+        $actions = [
+            'edit' => [
+                'route' => 'edit',
+                'icon' => 'fas fa-edit',
+                'text' => 'تعديل',
+                'class' => 'btn-edit',
+                'color' => 'primary'
+            ],
+            'delete' => [
+                'action' => 'delete',
+                'icon' => $isDeleted ? 'fas fa-undo' : 'fas fa-trash',
+                'text' => $isDeleted ? 'استعادة' : 'حذف',
+                'class' => 'btnDelete ' . ($isDeleted ? 'btn-primary' : 'btn-delete'),
+                'color' => $isDeleted ? 'primary' : 'danger',
+                'data' => ['id' => $recordId, 'status' => $recordStatus]
+            ]
+        ];
+    }
+@endphp
+
+@if($isMobile)
+    {{-- Mobile Layout --}}
+    @foreach($actions as $action)
+        @if(isset($action['route']))
+            <a href="{{ $action['route'] }}" 
+               class="btn btn-{{ $action['color'] ?? 'primary' }} btn-sm mx-1" 
+               style="min-width: 70px;">
+                <i class="{{ $action['icon'] }}"></i> {{ $action['text'] }}
+            </a>
+        @else
+            <a href="javascript:void(0)" 
+               class="btn btn-{{ $action['color'] ?? 'danger' }} btn-sm mx-1 {{ $action['class'] ?? '' }}"
+               @if(isset($action['data']))
+                   @foreach($action['data'] as $key => $value)
+                       data-{{ $key }}="{{ $value }}"
+                   @endforeach
+               @endif
+               style="min-width: 70px;">
+                <i class="{{ $action['icon'] }}"></i> {{ $action['text'] }}
+            </a>
+        @endif
+    @endforeach
+@else
+    {{-- Desktop Layout --}}
+    <div class="action-buttons d-flex align-items-center">
+        @foreach($actions as $action)
+            @if(isset($action['route']))
+                <a href="{{ $action['route'] }}" 
+                   class="btn-action {{ $action['class'] ?? 'btn-edit' }}" 
+                   title="{{ $action['text'] }}">
+                    <i class="{{ $action['icon'] }}"></i>
+                </a>
+            @else
+                <a href="javascript:void(0)" 
+                   class="btn-action {{ $action['class'] ?? 'btn-delete' }}"
+                   @if(isset($action['data']))
+                       @foreach($action['data'] as $key => $value)
+                           data-{{ $key }}="{{ $value }}"
+                       @endforeach
+                   @endif
+                   title="{{ $action['text'] }}">
+                    <i class="{{ $action['icon'] }}"></i>
+                </a>
+            @endif
+        @endforeach
+    </div>
+@endif''')
+
+    # LAYOUTS
+    
+    # Page Wrapper
+    create_file("partials/components/layouts/page-wrapper.blade.php", '''{{-- Page Wrapper Layout --}}
+@props([
+    'title',
+    'createRoute' => null,
+    'createButtonText' => 'إضافة جديد',
+    'breadcrumbs' => [],
+    'showHeader' => true
+])
+
+@if($showHeader)
+    @include('admin.partials.components.layouts.header-section', [
+        'title' => $title,
+        'createRoute' => $createRoute,
+        'createButtonText' => $createButtonText,
+        'breadcrumbs' => $breadcrumbs
+    ])
+@endif
+
+@include('admin.partials.components.layouts.content-section')''')
+
+    # Header Section
+    create_file("partials/components/layouts/header-section.blade.php", '''{{-- Header Section --}}
+@props([
+    'title',
+    'createRoute' => null,
+    'createButtonText' => 'إضافة جديد',
+    'breadcrumbs' => []
+])
+
+<section class="content-header">
+    <div class="container-fluid">
+        {{-- Breadcrumbs --}}
+        @if(!empty($breadcrumbs))
+            <div class="row mb-2">
+                <div class="col-sm-12">
+                    <ol class="breadcrumb">
+                        @foreach($breadcrumbs as $breadcrumb)
+                            @if($loop->last)
+                                <li class="breadcrumb-item active">{{ $breadcrumb['text'] }}</li>
+                            @else
+                                <li class="breadcrumb-item">
+                                    <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['text'] }}</a>
+                                </li>
+                            @endif
+                        @endforeach
+                    </ol>
+                </div>
+            </div>
+        @endif
+        
+        {{-- Title and Action Button --}}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h1 class="m-0">{{ $title }}</h1>
+            @if($createRoute)
+                <a href="{{ $createRoute }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus"></i> {{ $createButtonText }}
+                </a>
+            @endif
+        </div>
+    </div>
+</section>''')
+
+    # Content Section
+    create_file("partials/components/layouts/content-section.blade.php", '''{{-- Content Section --}}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                {{ $slot }}
+            </div>
+        </div>
+    </div>
+</section>''')
+
+    # FORM FIELDS (Enhanced)
+    
+    # Enhanced Text Input
+    create_file("partials/form-fields/text-input.blade.php", '''{{-- Enhanced Text Input --}}
+@props([
+    'name',
+    'label',
+    'value' => null,
+    'placeholder' => '',
+    'colClass' => 'col-12',
+    'required' => false,
+    'disabled' => false,
+    'readonly' => false,
+    'maxlength' => null,
+    'pattern' => null,
+    'help' => null,
+    'icon' => null
+])
+
+<div class="{{ $colClass }}">
+    <div class="form-group">
+        <label for="{{ $name }}">
+            {{ $label }}
+            @if($required)
+                <span class="text-danger">*</span>
+            @endif
+        </label>
+        
+        @if($icon)
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="{{ $icon }}"></i></span>
+                </div>
+        @endif
+        
+        <input type="text" 
+               id="{{ $name }}"
+               name="{{ $name }}" 
+               value="{{ $value ?? Request::get($name) }}"
+               class="form-control @error($name) is-invalid @enderror" 
+               placeholder="{{ $placeholder }}"
+               @if($required) required @endif
+               @if($disabled) disabled @endif
+               @if($readonly) readonly @endif
+               @if($maxlength) maxlength="{{ $maxlength }}" @endif
+               @if($pattern) pattern="{{ $pattern }}" @endif>
+        
+        @if($icon)
+            </div>
+        @endif
+        
+        @if($help)
+            <small class="form-text text-muted">{{ $help }}</small>
+        @endif
+        
+        @error($name)
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>''')
+
+    # Enhanced Select Input
+    create_file("partials/form-fields/select-input.blade.php", '''{{-- Enhanced Select Input --}}
+@props([
+    'name',
+    'label',
+    'options' => [],
+    'value' => null,
+    'colClass' => 'col-12',
+    'required' => false,
+    'disabled' => false,
+    'multiple' => false,
+    'help' => null,
+    'placeholder' => null,
+    'icon' => null
+])
+
+<div class="{{ $colClass }}">
+    <div class="form-group">
+        <label for="{{ $name }}">
+            {{ $label }}
+            @if($required)
+                <span class="text-danger">*</span>
+            @endif
+        </label>
+        
+        @if($icon)
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="{{ $icon }}"></i></span>
+                </div>
+        @endif
+        
+        <select id="{{ $name }}"
+                name="{{ $name }}{{ $multiple ? '[]' : '' }}" 
+                class="form-control @error($name) is-invalid @enderror"
+                @if($required) required @endif
+                @if($disabled) disabled @endif
+                @if($multiple) multiple @endif>
+            
+            @if($placeholder && !$multiple)
+                <option value="">{{ $placeholder }}</option>
+            @endif
+            
+            @foreach($options as $optionValue => $optionText)
+                @if(is_array($optionText))
+                    <optgroup label="{{ $optionValue }}">
+                        @foreach($optionText as $subValue => $subText)
+                            <option value="{{ $subValue }}" 
+                                    {{ (($value ?? Request::get($name)) == $subValue) ? 'selected' : '' }}>
+                                {{ $subText }}
+                            </option>
+                        @endforeach
+                    </optgroup>
+                @else
+                    <option value="{{ $optionValue }}" 
+                            {{ (($value ?? Request::get($name)) == $optionValue) ? 'selected' : '' }}>
+                        {{ $optionText }}
+                    </option>
+                @endif
+            @endforeach
+        </select>
+        
+        @if($icon)
+            </div>
+        @endif
+        
+        @if($help)
+            <small class="form-text text-muted">{{ $help }}</small>
+        @endif
+        
+        @error($name)
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>''')
+
+    # Date Input
+    create_file("partials/form-fields/date-input.blade.php", '''{{-- Date Input --}}
+@props([
+    'name',
+    'label',
+    'value' => null,
+    'colClass' => 'col-12',
+    'required' => false,
+    'disabled' => false,
+    'min' => null,
+    'max' => null,
+    'help' => null
+])
+
+<div class="{{ $colClass }}">
+    <div class="form-group">
+        <label for="{{ $name }}">
+            {{ $label }}
+            @if($required)
+                <span class="text-danger">*</span>
+            @endif
+        </label>
+        
+        <input type="date" 
+               id="{{ $name }}"
+               name="{{ $name }}" 
+               value="{{ $value ?? Request::get($name) }}"
+               class="form-control @error($name) is-invalid @enderror"
+               @if($required) required @endif
+               @if($disabled) disabled @endif
+               @if($min) min="{{ $min }}" @endif
+               @if($max) max="{{ $max }}" @endif>
+                                
+                                @if($help)
+                                    <small class="form-text text-muted">{{ $help }}</small>
+                                @endif
+                                
+                                @error($name)
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>''')
+
+            # Number Input
+    create_file("partials/form-fields/number-input.blade.php", '''{{-- Number Input --}}
+@props([
+    'name',
+    'label',
+    'value' => null,
+    'placeholder' => '',
+    'colClass' => 'col-12',
+    'required' => false,
+    'disabled' => false,
+    'readonly' => false,
+    'min' => null,
+    'max' => null,
+    'step' => null,
+    'help' => null,
+    'icon' => null
+])
+
+<div class="{{ $colClass }}">
+    <div class="form-group">
+        <label for="{{ $name }}">
+            {{ $label }}
+            @if($required)
+                <span class="text-danger">*</span>
+            @endif
+        </label>
+        
+        @if($icon)
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="{{ $icon }}"></i></span>
+                </div>
+        @endif
+        
+        <input type="number" 
+            id="{{ $name }}"
+            name="{{ $name }}" 
+            value="{{ $value ?? Request::get($name) }}"
+            class="form-control @error($name) is-invalid @enderror" 
+            placeholder="{{ $placeholder }}"
+            @if($required) required @endif
+            @if($disabled) disabled @endif
+            @if($readonly) readonly @endif
+            @if($min !== null) min="{{ $min }}" @endif
+            @if($max !== null) max="{{ $max }}" @endif
+            @if($step) step="{{ $step }}" @endif>
+        
+        @if($icon)
+            </div>
+        @endif
+        
+        @if($help)
+            <small class="form-text text-muted">{{ $help }}</small>
+        @endif
+        
+        @error($name)
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>''')
+
+            # Checkbox Input
+    create_file("partials/form-fields/checkbox-input.blade.php", '''{{-- Checkbox Input --}}
+@props([
+    'name',
+    'label',
+    'value' => 1,
+    'checked' => false,
+    'colClass' => 'col-12',
+    'disabled' => false,
+    'help' => null,
+    'inline' => false
+])
+
+<div class="{{ $colClass }}">
+    <div class="form-group">
+        <div class="form-check {{ $inline ? 'form-check-inline' : '' }}">
+            <input type="checkbox" 
+                id="{{ $name }}"
+                name="{{ $name }}" 
+                value="{{ $value }}"
+                class="form-check-input @error($name) is-invalid @enderror"
+                @if($checked || old($name) || Request::get($name)) checked @endif
+                @if($disabled) disabled @endif>
+            
+            <label class="form-check-label" for="{{ $name }}">
+                {{ $label }}
+            </label>
+        </div>
+        
+        @if($help)
+            <small class="form-text text-muted">{{ $help }}</small>
+        @endif
+        
+        @error($name)
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>''')
+
+            # Textarea Input
+    create_file("partials/form-fields/textarea-input.blade.php", '''{{-- Textarea Input --}}
+@props([
+    'name',
+    'label',
+    'value' => null,
+    'placeholder' => '',
+    'colClass' => 'col-12',
+    'required' => false,
+    'disabled' => false,
+    'readonly' => false,
+    'rows' => 3,
+    'maxlength' => null,
+    'help' => null
+])
+
+<div class="{{ $colClass }}">
+    <div class="form-group">
+        <label for="{{ $name }}">
+            {{ $label }}
+            @if($required)
+                <span class="text-danger">*</span>
+            @endif
+        </label>
+        
+        <textarea id="{{ $name }}"
+                name="{{ $name }}" 
+                class="form-control @error($name) is-invalid @enderror" 
+                placeholder="{{ $placeholder }}"
+                rows="{{ $rows }}"
+                @if($required) required @endif
+                @if($disabled) disabled @endif
+                @if($readonly) readonly @endif
+                @if($maxlength) maxlength="{{ $maxlength }}" @endif>{{ $value ?? Request::get($name) }}</textarea>
+        
+        @if($help)
+            <small class="form-text text-muted">{{ $help }}</small>
+        @endif
+        
+        @error($name)
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>''')
+
+            # File Input
+    create_file("partials/form-fields/file-input.blade.php", '''{{-- File Input --}}
+@props([
+    'name',
+    'label',
+    'colClass' => 'col-12',
+    'required' => false,
+    'disabled' => false,
+    'accept' => null,
+    'multiple' => false,
+    'help' => null,
+    'preview' => false,
+    'currentFile' => null
+])
+
+<div class="{{ $colClass }}">
+    <div class="form-group">
+        <label for="{{ $name }}">
+            {{ $label }}
+            @if($required)
+                <span class="text-danger">*</span>
+            @endif
+        </label>
+        
+        <input type="file" 
+            id="{{ $name }}"
+            name="{{ $name }}{{ $multiple ? '[]' : '' }}" 
+            class="form-control-file @error($name) is-invalid @enderror"
+            @if($required) required @endif
+            @if($disabled) disabled @endif
+            @if($accept) accept="{{ $accept }}" @endif
+            @if($multiple) multiple @endif
+            @if($preview) onchange="previewFile(this)" @endif>
+        
+        @if($currentFile)
+            <div class="mt-2">
+                <small class="text-muted">الملف الحالي: {{ $currentFile }}</small>
+            </div>
+        @endif
+        
+        @if($preview)
+            <div id="{{ $name }}_preview" class="mt-2" style="display: none;">
+                <img id="{{ $name }}_preview_img" src="#" alt="معاينة" class="img-thumbnail" style="max-width: 200px;">
+            </div>
+        @endif
+        
+        @if($help)
+            <small class="form-text text-muted">{{ $help }}</small>
+        @endif
+        
+        @error($name)
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+</div>''')
+
+            # WIDGETS
+            
+            # Pagination Widget
+    create_file("partials/widgets/pagination-widget.blade.php", '''{{-- Pagination Widget --}}
+@props([
+    'records',
+    'showInfo' => true,
+    'showLinks' => true,
+    'wrapperClass' => 'row mt-3',
+    'infoClass' => 'col-md-6 d-flex align-items-center',
+    'linksClass' => 'col-md-6 d-flex justify-content-end'
+])
+
+@if($records instanceof \Illuminate\Pagination\LengthAwarePaginator && $records->hasPages())
+    <div class="{{ $wrapperClass }}">
+        @if($showInfo)
+            <div class="{{ $infoClass }}">
+                <div class="pagination-info">
+                    <small class="text-muted">
+                        عرض {{ $records->firstItem() }} إلى {{ $records->lastItem() }} من أصل {{ $records->total() }} نتيجة
+                    </small>
+                </div>
+            </div>
+        @endif
+        
+        @if($showLinks)
+            <div class="{{ $linksClass }}">
+                {{ $records->appends(request()->query())->links() }}
+            </div>
+        @endif
+    </div>
+@endif''')
+
+            # Loading Spinner
+    create_file("partials/widgets/loading-spinner.blade.php", '''{{-- Loading Spinner Widget --}}
+@props([
+    'size' => 'md',
+    'color' => 'primary',
+    'text' => 'جاري التحميل...',
+    'showText' => true,
+    'centered' => true,
+    'overlay' => false
+])
+
+@php
+    $sizeClass = match($size) {
+        'sm' => 'spinner-border-sm',
+        'lg' => 'spinner-border-lg',
+        default => ''
+    };
+    
+    $colorClass = "text-{$color}";
+    $wrapperClass = $centered ? 'text-center' : '';
+    
+    if ($overlay) {
+        $wrapperClass .= ' loading-overlay position-fixed w-100 h-100 d-flex align-items-center justify-content-center';
+    }
+@endphp
+
+<div class="{{ $wrapperClass }}" {{ $overlay ? 'style=background-color:rgba(255,255,255,0.8);z-index:9999;top:0;left:0;' : '' }}>
+    <div class="spinner-border {{ $sizeClass }} {{ $colorClass }}" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+    @if($showText)
+        <div class="mt-2">
+            <span class="text-muted">{{ $text }}</span>
+        </div>
+    @endif
+</div>''')
+
+            # No Data Widget
+    create_file("partials/widgets/no-data-widget.blade.php", '''{{-- No Data Widget --}}
+@props([
+    'message' => 'لا توجد بيانات متاحة حالياً.',
+    'icon' => 'fas fa-info-circle',
+    'colspan' => null,
+    'wrapperClass' => 'text-center py-4',
+    'iconClass' => 'text-muted mb-2',
+    'textClass' => 'text-muted',
+    'actionButton' => null
+])
+
+@if($colspan)
+    <tr>
+        <td colspan="{{ $colspan }}">
+@endif
+
+<div class="{{ $wrapperClass }}">
+    <div class="{{ $iconClass }}">
+        <i class="{{ $icon }}" style="font-size: 3rem;"></i>
+    </div>
+    <div class="{{ $textClass }}">
+        <h5>{{ $message }}</h5>
+    </div>
+    
+    @if($actionButton)
+        <div class="mt-3">
+            <a href="{{ $actionButton['url'] }}" class="btn btn-{{ $actionButton['color'] ?? 'primary' }} btn-sm">
+                @if(isset($actionButton['icon']))
+                    <i class="{{ $actionButton['icon'] }}"></i>
+                @endif
+                {{ $actionButton['text'] }}
+            </a>
+        </div>
+    @endif
+</div>
+
+@if($colspan)
+        </td>
+    </tr>
+@endif''')
+
+            # Confirmation Modal
+    create_file("partials/widgets/confirmation-modal.blade.php", '''{{-- Confirmation Modal Widget --}}
+@props([
+    'modalId' => 'confirmationModal',
+    'title' => 'تأكيد العملية',
+    'message' => 'هل أنت متأكد من أنك تريد المتابعة؟',
+    'confirmText' => 'تأكيد',
+    'cancelText' => 'إلغاء',
+    'confirmClass' => 'btn-danger',
+    'cancelClass' => 'btn-secondary'
+])
+
+<div class="modal fade" id="{{ $modalId }}" tabindex="-1" role="dialog" aria-labelledby="{{ $modalId }}Label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ $modalId }}Label">{{ $title }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-message">{{ $message }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn {{ $cancelClass }}" data-dismiss="modal">{{ $cancelText }}</button>
+                <button type="button" class="btn {{ $confirmClass }}" id="{{ $modalId }}Confirm">{{ $confirmText }}</button>
+            </div>
+        </div>
+    </div>
+</div>''')
+
+            # SCRIPTS
+            
+            # Generic Table Manager
+    create_file("partials/scripts/generic-table-manager.blade.php", '''{{-- resources/views/admin/partials/scripts/generic-table-manager.blade.php --}}
+
+<script type="text/javascript">
+    class GenericTableManager {
+        constructor(options = {}) {
+            this.options = {
+                deleteButtonClass: '.btnDelete',
+                tableContainerSelector: '#table-container',
+                confirmMessage: 'هل أنت متأكد من الحذف؟',
+                confirmRestoreMessage: 'هل أنت متأكد من الاستعادة؟',
+                confirmTitle: 'تأكيد العملية',
+                loadingText: '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...',
+                defaultButtonText: '<i class="fas fa-trash"></i>',
+                successMessage: 'تمت العملية بنجاح',
+                errorPrefix: 'حدث خطأ: ',
+                connectionErrorPrefix: 'حدث خطأ أثناء الاتصال بالخادم: ',
+                deleteFailedMessage: 'فشل أثناء الحذف',
+                baseDeleteUrl: null,
+                baseRestoreUrl: null,
+                csrfToken: "{{ csrf_token() }}",
+                ...options
+            };
+
+            this.validateOptions();
+            this.init();
+        }
+
+        validateOptions() {
+            if (!this.options.baseDeleteUrl || !this.options.baseRestoreUrl) {
+                throw new Error('baseDeleteUrl و baseRestoreUrl مطلوبان');
+            }
+        }
+
+        init() {
+            this.bindEvents();
+        }
+
+        bindEvents() {
+            $('body').on('click', this.options.deleteButtonClass, (e) => {
+                const button = $(e.currentTarget);
+                const status = Number(button.data('status'));
+
+                if (status === 2) {
+                    this.handleRestore(button);
+                } else {
+                    this.handleDelete(button);
+                }
+            });
+        }
+
+        handleDelete(button) {
+            if (typeof showCustomConfirm === 'function') {
+                showCustomConfirm(
+                    this.options.confirmMessage,
+                    () => this.sendRequest(button, 'delete'),
+                    this.options.confirmTitle
+                );
+            } else {
+                if (confirm(this.options.confirmMessage)) {
+                    this.sendRequest(button, 'delete');
+                }
+            }
+        }
+
+        handleRestore(button) {
+            if (typeof showCustomConfirm === 'function') {
+                showCustomConfirm(
+                    this.options.confirmRestoreMessage,
+                    () => this.sendRequest(button, 'restore'),
+                    this.options.confirmTitle
+                );
+            } else {
+                if (confirm(this.options.confirmRestoreMessage)) {
+                    this.sendRequest(button, 'restore');
+                }
+            }
+        }
+
+        sendRequest(button, action) {
+            const recordId = button.data('id');
+            const baseUrl = action === 'restore' ?
+                this.options.baseRestoreUrl :
+                this.options.baseDeleteUrl;
+
+            const url = `${baseUrl}/${recordId}`;
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: {
+                    _token: this.options.csrfToken
+                },
+                dataType: "json",
+                beforeSend: () => {
+                    this.setButtonLoading(button, true);
+                },
+                success: (data) => {
+                    this.handleDeleteSuccess(data);
+                },
+                error: (xhr, status, error) => {
+                    this.handleDeleteError(error);
+                },
+                complete: () => {
+                    this.setButtonLoading(button, false);
+                }
+            });
+        }
+
+        setButtonLoading(button, isLoading) {
+            if (isLoading) {
+                button.prop('disabled', true)
+                    .html(this.options.loadingText);
+            } else {
+                button.prop('disabled', false)
+                    .html(this.options.defaultButtonText);
+            }
+        }
+
+        handleDeleteSuccess(data) {
+            if (data.success) {
+                this.refreshTable();
+                this.showMessage(this.options.successMessage, 'success');
+            } else {
+                const errorMsg = this.options.errorPrefix + (data.message || this.options.deleteFailedMessage);
+                this.showMessage(errorMsg, 'error');
+            }
+        }
+
+        handleDeleteError(error) {
+            const errorMsg = this.options.connectionErrorPrefix + error;
+            this.showMessage(errorMsg, 'error');
+        }
+
+        refreshTable() {
+            $(this.options.tableContainerSelector).load(location.href +
+                ` ${this.options.tableContainerSelector} > *`);
+        }
+
+        showMessage(message, type) {
+            if (type === 'success' && typeof showSuccess === 'function') {
+                showSuccess(message);
+            } else if (type === 'error' && typeof showError === 'function') {
+                showError(message);
+            } else {
+                alert(message);
+            }
+        }
+    }
+
+    window.GenericTableManager = GenericTableManager;
+</script>''')
+
+            # Form Validator
+    create_file("partials/scripts/form-validator.blade.php", '''{{-- Form Validator Script --}}
+<script>
+class FormValidator {
+    constructor(formSelector = 'form', config = {}) {
+        this.forms = document.querySelectorAll(formSelector);
+        this.config = {
+            showErrors: true,
+            submitButton: 'button[type="submit"]',
+            errorClass: 'is-invalid',
+            successClass: 'is-valid',
+            ...config
+        };
+        
+        this.init();
+    }
+    
+    init() {
+        this.forms.forEach(form => {
+            this.bindFormEvents(form);
+        });
+    }
+    
+    bindFormEvents(form) {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        
+        // Real-time validation
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                this.validateField(input);
+            });
+            
+            input.addEventListener('input', () => {
+                if (input.classList.contains(this.config.errorClass)) {
+                    this.validateField(input);
+                }
+            });
+        });
+        
+        // Form submission
+        form.addEventListener('submit', (e) => {
+            if (!this.validateForm(form)) {
+                e.preventDefault();
+                this.focusFirstError(form);
+            }
+        });
+    }
+    
+    validateField(field) {
+        const rules = this.getFieldRules(field);
+        const value = field.value.trim();
+        let isValid = true;
+        let errorMessage = '';
+        
+        // Required validation
+        if (rules.required && !value) {
+            isValid = false;
+            errorMessage = 'هذا الحقل مطلوب';
+        }
+        
+        // Email validation
+        if (isValid && rules.email && value) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                isValid = false;
+                errorMessage = 'يرجى إدخال بريد إلكتروني صحيح';
+            }
+        }
+        
+        // Number validation
+        if (isValid && rules.number && value) {
+            if (isNaN(value)) {
+                isValid = false;
+                errorMessage = 'يرجى إدخال رقم صحيح';
+            }
+        }
+        
+        // Min length validation
+        if (isValid && rules.minLength && value.length < rules.minLength) {
+            isValid = false;
+            errorMessage = `يجب أن يكون الحد الأدنى ${rules.minLength} أحرف`;
+        }
+        
+        // Max length validation
+        if (isValid && rules.maxLength && value.length > rules.maxLength) {
+            isValid = false;
+            errorMessage = `يجب أن يكون الحد الأقصى ${rules.maxLength} أحرف`;
+        }
+        
+        // Pattern validation
+        if (isValid && rules.pattern && value) {
+            const regex = new RegExp(rules.pattern);
+            if (!regex.test(value)) {
+                isValid = false;
+                errorMessage = 'تنسيق الحقل غير صحيح';
+            }
+        }
+        
+        this.updateFieldStatus(field, isValid, errorMessage);
+        return isValid;
+    }
+    
+    getFieldRules(field) {
+        return {
+            required: field.hasAttribute('required'),
+            email: field.type === 'email',
+            number: field.type === 'number',
+            minLength: field.getAttribute('minlength'),
+            maxLength: field.getAttribute('maxlength'),
+            pattern: field.getAttribute('pattern')
+        };
+    }
+    
+    updateFieldStatus(field, isValid, errorMessage) {
+        // Remove existing classes
+        field.classList.remove(this.config.errorClass, this.config.successClass);
+        
+        // Add appropriate class
+        if (isValid) {
+            field.classList.add(this.config.successClass);
+        } else {
+            field.classList.add(this.config.errorClass);
+        }
+        
+        // Handle error message
+        if (this.config.showErrors) {
+            this.updateErrorMessage(field, isValid, errorMessage);
+        }
+    }
+    
+    updateErrorMessage(field, isValid, errorMessage) {
+        const existingError = field.parentNode.querySelector('.invalid-feedback');
+        
+        if (!isValid && errorMessage) {
+            if (existingError) {
+                existingError.textContent = errorMessage;
+            } else {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = errorMessage;
+                field.parentNode.appendChild(errorDiv);
+            }
+        } else if (isValid && existingError) {
+            existingError.style.display = 'none';
+        }
+    }
+    
+    validateForm(form) {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        let isFormValid = true;
+        
+        inputs.forEach(input => {
+            if (!this.validateField(input)) {
+                isFormValid = false;
+            }
+        });
+        
+        return isFormValid;
+    }
+    
+    focusFirstError(form) {
+        const firstError = form.querySelector(`.${this.config.errorClass}`);
+        if (firstError) {
+            firstError.focus();
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+}
+
+// File preview function
+function previewFile(input) {
+    const file = input.files[0];
+    const previewContainer = document.getElementById(input.id + '_preview');
+    const previewImg = document.getElementById(input.id + '_preview_img');
+    
+    if (file && previewContainer && previewImg) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewContainer.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(file);
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    window.formValidator = new FormValidator();
+});
+</script>''')
+
+            # Ajax Handler
+    create_file("partials/scripts/ajax-handler.blade.php", '''{{-- Ajax Handler Script --}}
+<script>
+class AjaxHandler {
+    constructor(config = {}) {
+        this.config = {
+            csrfToken: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+            defaultHeaders: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            timeout: 30000,
+            ...config
+        };
+    }
+    
+    async request(url, options = {}) {
+        const defaultOptions = {
+            method: 'GET',
+            headers: {
+                ...this.config.defaultHeaders,
+                'X-CSRF-TOKEN': this.config.csrfToken
+            }
+        };
+        
+        const finalOptions = { ...defaultOptions, ...options };
+        
+        // Add headers if not already present
+        if (finalOptions.headers) {
+            finalOptions.headers = { ...defaultOptions.headers, ...finalOptions.headers };
+        }
+        
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+            
+            finalOptions.signal = controller.signal;
+            
+            const response = await fetch(url, finalOptions);
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return { success: true, data, response };
+            
+        } catch (error) {
+            console.error('Ajax request failed:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    async get(url, params = {}) {
+        const urlWithParams = new URL(url, window.location.origin);
+        Object.keys(params).forEach(key => 
+            urlWithParams.searchParams.append(key, params[key])
+        );
+        
+        return this.request(urlWithParams.toString());
+    }
+    
+    async post(url, data = {}) {
+        return this.request(url, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+    
+    async put(url, data = {}) {
+        return this.request(url, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+    
+    async delete(url) {
+        return this.request(url, {
+            method: 'DELETE'
+        });
+    }
+    
+    // Form submission helper
+    async submitForm(form, options = {}) {
+        const formData = new FormData(form);
+        const method = form.method || 'POST';
+        const url = form.action || window.location.href;
+        
+        // Convert FormData to JSON if content type is JSON
+        let body = formData;
+        if (this.config.defaultHeaders['Content-Type'] === 'application/json') {
+            const jsonData = {};
+            for (let [key, value] of formData.entries()) {
+                jsonData[key] = value;
+            }
+            body = JSON.stringify(jsonData);
+        } else {
+            // For file uploads, use FormData and remove Content-Type to let browser set it
+            const headers = { ...this.config.defaultHeaders };
+            delete headers['Content-Type'];
+            options.headers = { ...headers, ...options.headers };
+        }
+        
+        return this.request(url, {
+            method: method.toUpperCase(),
+            body,
+            ...options
+        });
+    }
+    
+    // Loading state management
+    showLoading(element) {
+        if (element) {
+            element.disabled = true;
+            const originalText = element.textContent;
+            element.dataset.originalText = originalText;
+            element.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+        }
+    }
+    
+    hideLoading(element) {
+        if (element && element.dataset.originalText) {
+            element.disabled = false;
+            element.textContent = element.dataset.originalText;
+            delete element.dataset.originalText;
+        }
+    }
+    
+    // Notification helper
+    showNotification(message, type = 'info') {
+        if (typeof toastr !== 'undefined') {
+            toastr[type](message);
+        } else if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: type === 'success' ? 'نجح!' : type === 'error' ? 'خطأ!' : 'معلومة',
+                text: message,
+                icon: type,
+                timer: 3000
+            });
+        } else {
+            alert(message);
+        }
+    }
+}
+
+// Global instance
+window.ajaxHandler = new AjaxHandler();
+
+// jQuery-style shortcuts if jQuery is available
+if (typeof $ !== 'undefined') {
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+}
+</script>''')
+
+    print("\n" + "=" * 50)
+    print("✅ All components filled successfully!")
+    print("\n📋 Summary of created components:")
+    print("   • Tables: generic-list-table, responsive-data-table, mobile-record-card")
+    print("   • Forms: generic-search-form")
+    print("   • Badges: generic-badge, status-badge")
+    print("   • Buttons: action-buttons")
+    print("   • Layouts: page-wrapper, header-section, content-section")
+    print("   • Form Fields: text-input, number-input, select-input, date-input,")
+    print("   • Widgets: pagination-widget, loading-spinner, no-data-widget, confirmation-modal")
+    print("   • Scripts: generic-table-manager, form-validator, ajax-handler")
+    print("\n🎉 Ready to use! Include these components in your Blade templates.")
+
+if __name__ == "__main__":
+    fill_components()
