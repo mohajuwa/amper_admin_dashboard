@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 class OrderEnhViewModel extends Model
 {
     protected $table = 'enhanced_orders_view';
@@ -26,6 +28,7 @@ class OrderEnhViewModel extends Model
         'model_name',
         'year',
         'license_plate_number',
+        'is_scheduled',
         'sub_service_ids',
         'sub_service_names',
         'services_total_price',
@@ -50,8 +53,79 @@ class OrderEnhViewModel extends Model
         'address_longitude',
     ];
 
-    // Remove the casts array since we're using custom accessors
-    // protected $casts = []; // Commented out to avoid conflicts
+ 
+    public function scheduling()
+    {
+        // An order has one scheduling record, linked by the 'order_id' column.
+        return $this->hasOne(OrderScheduling::class, 'order_id', 'order_id');
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(OrderOffer::class, 'order_id', 'order_id');
+    }
+
+    public function activityLog()
+    {
+        // Order by latest first
+        return $this->hasMany(OrderActivityLog::class, 'order_id', 'order_id')->latest();
+    }
+
+    public function negotiations()
+    {
+        return $this->hasMany(OrderNegotiation::class, 'order_id', 'order_id')->orderBy('negotiation_round');
+    }
+
+    public function customerResponses()
+    {
+        return $this->hasMany(CustomerResponse::class, 'order_id', 'order_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(VendorModel::class, 'vendor_id', 'vendor_id');
+    }
+
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(VehicleModel::class, 'vehicle_id');
+    }
+
+    public function faultType(): BelongsTo
+    {
+        return $this->belongsTo(FaultTypeModel::class, 'fault_type_id');
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(CouponModel::class, 'orders_coupon_id');
+    }
+
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(AddressModel::class, 'orders_address');
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethodModel::class, 'orders_paymentmethod');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItemModel::class, 'order_id', 'order_id');
+    }
+
+    public function websiteInfo(): HasOne
+    {
+        return $this->hasOne(WebsiteInfoOrder::class, 'order_id', 'order_id');
+    }
 
     public static function getSingle($id)
     {

@@ -7,13 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $header_title ?? 'لوحة التحكم' }} - {{ config('app.name', 'متجر إلكتروني') }}</title>
 
-    <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <!-- Arabic Font Only -->
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap">
+   
 
     <!-- Core CSS -->
     <link rel="stylesheet" href="{{ url('public/assets/plugins/fontawesome-free/css/all.min.css') }}">

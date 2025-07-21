@@ -8,6 +8,7 @@ use App\Models\NotificationModel;
 use App\Models\OrderEnhViewModel;
 use App\Models\OrderModel;
 use App\Models\OrdersViewModel;
+use App\Models\VendorModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ class OrderController extends Controller
     {
         $data['header_title'] = 'قائمة الطلبات';
         $data['getRecord'] = OrderModel::getRecord();
-        
+
         return view('admin.order.list', $data);
     }
 
@@ -29,23 +30,42 @@ class OrderController extends Controller
         }
 
         $data['header_title'] = 'تفاصيل الطلب';
-        $record = OrderEnhViewModel::getSingle($orderId);
 
+        // --- MODIFIED SECTION ---
+        // Use the main OrderModel to fetch the record and eager load all related data at once.
+        // This is more efficient and gives you access to the new tracking history.
+        $record = OrderEnhViewModel::with([
+            'scheduling',             // Your existing scheduling relationship
+            'offers.vendor',          // Gets offers and their associated vendor
+            'offers.vendorResponses', // Gets the responses for each offer
+            'activityLog',            // Gets the full activity log, ordered by latest
+            'negotiations.vendor'     // Gets negotiation history
+        ])->find($orderId); // Using find() to allow for your custom error message below
+
+        // Check if the record exists
         if (!$record) {
             return redirect()->back()->with('error', 'الطلب غير موجود');
         }
+        // --- END MODIFIED SECTION ---
+
+
+        $vendor = VendorModel::getRecord();
 
         // Add debugging information if in debug mode
         if (config('app.debug')) {
             \Log::info('Order Debug Info', [
                 'order_id' => $orderId,
-                'raw_json_fields' => $record->getRawJsonFields(),
-                'debug_json_fields' => $record->debugJsonFields()
+                // If getRawJsonFields() is a method on your OrderModel, it will still work.
+                // 'raw_json_fields' => $record->getRawJsonFields(),
+                // 'debug_json_fields' => $record->debugJsonFields()
             ]);
         }
 
-        // No need for manual JSON decoding - the model accessors handle this
+        // Pass the comprehensive $record object to the view.
+        // It now contains all the data: order details, scheduling, offers, and activity log.
         $data['getRecord'] = $record;
+        $data['getScheduling'] = $record; // The view can now access scheduling via $getRecord->scheduling
+        $data['vendor'] = $vendor;
 
         return view('admin.order.detail', $data);
     }
@@ -58,14 +78,14 @@ class OrderController extends Controller
         }
 
         $record = OrderEnhViewModel::getSingle($orderId);
-        
+
         if (!$record) {
             return response()->json(['error' => 'الطلب غير موجود'], 404);
         }
 
         // Get raw database query result
         $rawQuery = DB::table('ordersview')->where('order_id', $orderId)->first();
-        
+
         $diagnostics = [
             'order_id' => $orderId,
             'model_table' => $record->getTable(),
@@ -104,7 +124,7 @@ class OrderController extends Controller
                 FROM ordersview 
                 WHERE order_id = ?
             ", [$orderId]);
-            
+
             $diagnostics['direct_db_check'] = $fieldCheck;
         }
 
@@ -118,7 +138,7 @@ class OrderController extends Controller
         ]);
 
         $getOrder = OrdersViewModel::getSingle($id);
-        
+
         if (!$getOrder) {
             return response()->json(['error' => 'الطلب غير موجود'], 404);
         }
@@ -153,7 +173,7 @@ class OrderController extends Controller
     public function generateInvoice($id)
     {
         $order = OrderEnhViewModel::getSingle($id);
-        
+
         if (!$order) {
             return redirect()->back()->with('error', 'الطلب غير موجود');
         }

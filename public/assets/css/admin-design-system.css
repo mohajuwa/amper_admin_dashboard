@@ -5,6 +5,32 @@
 | Clean and minimal design system with proper content layout
 */
 
+/* ===== LOCAL FONT DEFINITIONS (TTF ONLY) ===== */
+/*
+ * Define the local Tajawal font for regular weight (400)
+ */
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Tajawal Regular'), local('Tajawal-Regular'),
+       url('/assets/Tajawal/Tajawal-Regular.ttf') format('truetype'); /* Only TTF */
+}
+
+/*
+ * Define the local Tajawal font for bold weight (700)
+ */
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Tajawal Bold'), local('Tajawal-Bold'),
+       url('/assets/Tajawal/Tajawal-Bold.ttf') format('truetype'); /* Only TTF */
+}
+
+
 /* ===== MAIN VARIABLES  ===== */
 :root {
   /* Colors - Change these to match your brand */
@@ -34,7 +60,7 @@
   --space-xl: 2rem;
 
   /* Typography */
-  --font-family: 'Tajawal', Arial, sans-serif;
+  --font-family: "Tajawal", sans-serif;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.125rem;
@@ -51,6 +77,9 @@
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-md);
+  font-weight: 700;
+  font-style: normal;
+
   direction: rtl;
   text-align: right;
   background-color: #f8fafc;
@@ -1184,6 +1213,7 @@ body.sidebar-collapse .main-footer {
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 991.98px) {
+
   /* Mobile: Sidebar hidden by default */
   .main-sidebar {
     transform: translateX(100%) !important;
@@ -1211,17 +1241,18 @@ body.sidebar-collapse .main-footer {
 
 /* ===== DESKTOP LAYOUT (>= 992px) ===== */
 @media (min-width: 992px) {
+
   /* Ensure sidebar is always visible on desktop by default */
   .main-sidebar {
     transform: translateX(0) !important;
   }
-  
+
   /* Ensure content wrapper has proper margin by default */
   .content-wrapper {
     margin-right: var(--sidebar-width) !important;
     margin-left: 0 !important;
   }
-  
+
   /* Ensure header navbar has proper padding by default */
   .main-header .navbar {
     padding-right: calc(var(--sidebar-width) + 1.5rem) !important;
@@ -1233,7 +1264,7 @@ body.sidebar-collapse .main-footer {
     margin-right: var(--sidebar-width) !important;
     margin-left: 0 !important;
   }
-  
+
   /* Allow toggle functionality to override defaults */
   body.sidebar-collapse .main-sidebar {
     transform: translateX(100%) !important;
@@ -1253,7 +1284,7 @@ body.sidebar-collapse .main-footer {
     margin-right: 0 !important;
     margin-left: 0 !important;
   }
-  
+
   /* Prevent navbar wrapping */
   .navbar-nav {
     flex-wrap: nowrap !important;
@@ -1564,7 +1595,7 @@ body.sidebar-collapse .main-footer {
 }
 
 /* Treeview parent link styling */
-.nav-item.has-treeview > .nav-link {
+.nav-item.has-treeview>.nav-link {
   cursor: pointer;
   user-select: none;
 }
@@ -1579,11 +1610,11 @@ body.sidebar-collapse .main-footer {
 }
 
 /* Arrow rotation states */
-.nav-item.has-treeview > .nav-link .right.fa-angle-left {
+.nav-item.has-treeview>.nav-link .right.fa-angle-left {
   transform: rotate(0deg);
 }
 
-.nav-item.has-treeview > .nav-link .right.fa-angle-down {
+.nav-item.has-treeview>.nav-link .right.fa-angle-down {
   transform: rotate(0deg);
 }
 
@@ -1593,14 +1624,14 @@ body.sidebar-collapse .main-footer {
   padding-left: 0;
   margin: 0;
   list-style: none;
-  background:transparent !important;
+  background: transparent !important;
   border-radius: 0 0 8px 8px;
   margin-top: 2px;
   overflow: hidden;
 }
 
 /* Show treeview when menu is open */
-.nav-item.menu-open > .nav-treeview {
+.nav-item.menu-open>.nav-treeview {
   display: block !important;
 }
 
@@ -1641,22 +1672,24 @@ body.sidebar-collapse .main-footer {
 }
 
 /* Parent menu states */
-.nav-item.has-treeview > .nav-link.active {
+.nav-item.has-treeview>.nav-link.active {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
-.nav-item.has-treeview.menu-open > .nav-link {
+.nav-item.has-treeview.menu-open>.nav-link {
   background: rgba(255, 255, 255, 0.1) !important;
   color: white !important;
 }
 
 /* Menu opening animation states */
-.nav-item.menu-is-opening > .nav-treeview {
+.nav-item.menu-is-opening>.nav-treeview {
   display: block !important;
 }
 
 /* Smooth transitions for all states */
-.nav-item, .nav-link, .nav-treeview {
+.nav-item,
+.nav-link,
+.nav-treeview {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1672,24 +1705,24 @@ body.sidebar-collapse .main-footer {
 }
 
 /* Hover effects for better UX */
-.nav-item.has-treeview > .nav-link:hover .right {
+.nav-item.has-treeview>.nav-link:hover .right {
   color: white;
 }
 
 /* Active parent highlighting */
-.nav-item.has-treeview.menu-open > .nav-link,
-.nav-item.has-treeview > .nav-link.active {
+.nav-item.has-treeview.menu-open>.nav-link,
+.nav-item.has-treeview>.nav-link.active {
   box-shadow: inset 3px 0 0 var(--primary-color);
 }
 
 
 /* ===== MENU STATES ===== */
-.menu-open > .nav-link {
+.menu-open>.nav-link {
   background: rgba(255, 255, 255, 0.1) !important;
   color: white !important;
 }
 
-.menu-open > .nav-link .right {
+.menu-open>.nav-link .right {
   transform: rotate(-90deg);
   transition: transform 0.3s ease;
 }
@@ -1737,11 +1770,25 @@ body.sidebar-collapse .main-footer {
 }
 
 /* ===== ICON COLORS FOR VISUAL HIERARCHY ===== */
-.text-cyan { color: #17a2b8 !important; }
-.text-teal { color: #20c997 !important; }
-.text-indigo { color: #6610f2 !important; }
-.text-purple { color: #6f42c1 !important; }
-.text-orange { color: #fd7e14 !important; }
+.text-cyan {
+  color: #17a2b8 !important;
+}
+
+.text-teal {
+  color: #20c997 !important;
+}
+
+.text-indigo {
+  color: #6610f2 !important;
+}
+
+.text-purple {
+  color: #6f42c1 !important;
+}
+
+.text-orange {
+  color: #fd7e14 !important;
+}
 
 /* ===== SMOOTH ANIMATIONS ===== */
 .nav-item {
@@ -1836,7 +1883,8 @@ body.sidebar-collapse .main-footer {
   margin: 0 !important;
   padding: 0 !important;
   list-style: none !important;
-  direction: ltr !important; /* Reverse for proper RTL display */
+  direction: ltr !important;
+  /* Reverse for proper RTL display */
 }
 
 /* Pagination Items */
@@ -1955,25 +2003,25 @@ body.sidebar-collapse .main-footer {
     gap: 1rem;
     padding: 1rem;
   }
-  
+
   .pagination {
     gap: 0.125rem;
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .pagination .page-link {
     min-width: 36px;
     height: 36px;
     padding: 0.375rem 0.5rem;
     font-size: 0.8rem;
   }
-  
+
   .pagination .page-item:first-child .page-link,
   .pagination .page-item:last-child .page-link {
     padding: 0.375rem 0.75rem;
   }
-  
+
   .pagination-info {
     margin-left: 0;
     text-align: center;
@@ -1985,14 +2033,14 @@ body.sidebar-collapse .main-footer {
   .pagination {
     gap: 0.0625rem;
   }
-  
+
   .pagination .page-link {
     min-width: 32px;
     height: 32px;
     padding: 0.25rem 0.375rem;
     font-size: 0.75rem;
   }
-  
+
   .pagination .page-item:first-child .page-link,
   .pagination .page-item:last-child .page-link {
     padding: 0.25rem 0.5rem;
@@ -2101,6 +2149,7 @@ body.sidebar-collapse .main-footer {
     opacity: 0.5;
     transform: scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -2165,7 +2214,7 @@ body.sidebar-collapse .main-footer {
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   border-right: 5px solid;
   position: relative;
   overflow: hidden;
@@ -2233,11 +2282,25 @@ body.sidebar-collapse .main-footer {
   font-size: 12px;
 }
 
-.notification.success .notification-icon { background: #48bb78; }
-.notification.error .notification-icon { background: #f56565; }
-.notification.warning .notification-icon { background: #ed8936; }
-.notification.info .notification-icon { background: #4299e1; }
-.notification.primary .notification-icon { background: #667eea; }
+.notification.success .notification-icon {
+  background: #48bb78;
+}
+
+.notification.error .notification-icon {
+  background: #f56565;
+}
+
+.notification.warning .notification-icon {
+  background: #ed8936;
+}
+
+.notification.info .notification-icon {
+  background: #4299e1;
+}
+
+.notification.primary .notification-icon {
+  background: #667eea;
+}
 
 .notification-title {
   font-weight: 600;
@@ -2263,7 +2326,7 @@ body.sidebar-collapse .main-footer {
 }
 
 .notification-close:hover {
-  background: rgba(0,0,0,0.1);
+  background: rgba(0, 0, 0, 0.1);
   color: #2d3748;
 }
 
@@ -2279,16 +2342,30 @@ body.sidebar-collapse .main-footer {
   bottom: 0;
   right: 0;
   height: 3px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   transition: width linear;
   border-radius: 0 0 16px 0;
 }
 
-.notification.success .notification-progress { background: #48bb78; }
-.notification.error .notification-progress { background: #f56565; }
-.notification.warning .notification-progress { background: #ed8936; }
-.notification.info .notification-progress { background: #4299e1; }
-.notification.primary .notification-progress { background: #667eea; }
+.notification.success .notification-progress {
+  background: #48bb78;
+}
+
+.notification.error .notification-progress {
+  background: #f56565;
+}
+
+.notification.warning .notification-progress {
+  background: #ed8936;
+}
+
+.notification.info .notification-progress {
+  background: #4299e1;
+}
+
+.notification.primary .notification-progress {
+  background: #667eea;
+}
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
@@ -2297,15 +2374,15 @@ body.sidebar-collapse .main-footer {
     right: 10px;
     top: 10px;
   }
-  
+
   .notification {
     padding: 16px;
   }
-  
+
   .notification-title {
     font-size: 15px;
   }
-  
+
   .notification-message {
     font-size: 13px;
     margin-right: 32px;

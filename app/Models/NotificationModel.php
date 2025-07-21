@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 
 class NotificationModel extends Model
@@ -21,62 +21,70 @@ class NotificationModel extends Model
 
     protected $casts = [
         'notification_datetime' => 'datetime',
+        'notification_title' => 'array',
+        'notification_body' => 'array',
     ];
 
-    // Safe JSON decode
-    private function safeJsonDecode($value, $default = ['en' => '', 'ar' => ''])
+    /**
+     * Accessor for a fully processed, readable title in Arabic.
+     */
+    public function getCleanTitleAttribute(): string
     {
-        if (empty($value) || !is_string($value))
-            return $default;
+        return $this->getCleanLocalizedValue('notification_title');
+    }
 
-        $decoded = json_decode($value, true);
-        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-            return $decoded;
+    /**
+     * Accessor for a fully processed, readable body in Arabic.
+     */
+    public function getCleanBodyAttribute(): string
+    {
+        return $this->getCleanLocalizedValue('notification_body');
+    }
+
+    /**
+     * Private helper to get and clean a localized string.
+     */
+    private function getCleanLocalizedValue(string $attribute): string
+    {
+        $data = $this->{$attribute} ?? ['ar' => '', 'en' => ''];
+        $initialString = $data['ar'] ?? $data['en'] ?? '';
+
+        if (!is_string($initialString) || empty($initialString)) {
+            return 'غير متوفر';
         }
 
-        Log::warning('Failed to decode JSON in Notification model', [
-            'value' => $value,
-            'error' => json_last_error_msg()
-        ]);
+        // CORRECTED: This robust pattern handles whitespace variations.
+        $pattern = '~\{         # Match the opening brace
+                     \s* # Allow whitespace
+                     "en"        # Match "en"
+                     \s*:\s* # Allow whitespace around the colon
+                     ".*?"       # Match the English value
+                     \s*,\s* # Allow whitespace around the comma
+                     "ar"        # Match "ar"
+                     \s*:\s* # Allow whitespace around the colon
+                     ".*?"       # Match the Arabic value
+                     \s* # Allow whitespace
+                     \}          # Match the closing brace
+                     ~x';
 
-        return $default;
+        $finalString = preg_replace_callback(
+            $pattern,
+            function ($matches) {
+                $nestedData = json_decode($matches[0], true);
+                return $nestedData['ar'] ?? $matches[0];
+            },
+            $initialString
+        );
+
+        return $finalString;
     }
 
-    // Accessors
-    public function getNotificationTitleAttribute($value)
-    {
-        return $this->safeJsonDecode($value);
-    }
+    // --- Your other existing methods below ---
 
-    public function getNotificationBodyAttribute($value)
-    {
-        return $this->safeJsonDecode($value);
-    }
-
-    // Localized value accessors (optional)
-    public function getLocalized($field, $locale = 'en')
-    {
-        $value = $this->$field;
-        return $value[$locale] ?? $value['en'] ?? '';
-    }
-
-    // Example: get title in English
-    public function getTitleEn()
-    {
-        return $this->getLocalized('notification_title', 'en');
-    }
-
-    public function getTitleAr()
-    {
-        return $this->getLocalized('notification_title', 'ar');
-    }
-
-    // Fixed getRecord method - removed incomplete where clause
     public static function getRecord()
     {
         $query = self::select("notification.*");
         
-        // Apply search filters if they exist
         if (Request::get('notification_id')) {
             $query->where('notification_id', 'like', '%' . Request::get('notification_id') . '%');
         }
@@ -111,14 +119,12 @@ class NotificationModel extends Model
             ->get();
     }
 
-    // Method to mark notification as read
     public static function markAsRead($notification_id)
     {
         return self::where('notification_id', $notification_id)
             ->update(['notification_read' => 1]);
     }
 
-    // Get total unread count
     public static function getUnreadCount()
     {
         return self::where('notification_read', 0)->count();

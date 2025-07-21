@@ -7,9 +7,12 @@ use App\Models\CarModelsModel;
 use App\Models\CarMakesModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Traits\GenericListController;
+use App\Services\TableConfigurationService;
 
 class CarModelsController extends Controller
 {
+        use GenericListController;
     private const STATUS_ACTIVE = 1;
     private const STATUS_INACTIVE = 0;
     private const STATUS_DELETED = 2;
@@ -108,6 +111,33 @@ class CarModelsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'حدث خطأ أثناء حذف الموديل'
+            ], 500);
+        }
+    }
+        public function restore(Request $request, $id)
+    {
+        try {
+            $discount_code = CarModelsModel::getSingle($id);
+
+            if (!$discount_code) {
+                return response()->json([
+                    'success' => false,
+                    'message' => ' العنصر غير موجود'
+                ], 404);
+            }
+
+            $discount_code->update(['status' => self::STATUS_ACTIVE]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم استعادة  العنصر بنجاح',
+                'redirect' => route('admin.car_model.list')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('carMakesModel deletion error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء استعادة  العنصر'
             ], 500);
         }
     }

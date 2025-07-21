@@ -190,17 +190,10 @@
                                                             @endif
                                                         </td>
                                                         <td>
-                                                            <div class="action-buttons">
-                                                                <a href="{{ route('admin.car_model.edit', $value->model_id) }}"
-                                                                    class="btn-action btn-edit" title="تعديل">
-                                                                    <i class="fas fa-edit"></i>
-                                                                </a>
-                                                                <a href="javascript:void(0)"
-                                                                    class="btn-action btn-delete btnDelete"
-                                                                    data-id="{{ $value->model_id }}" title="حذف">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </a>
-                                                            </div>
+                                                            @include(
+                                                                'admin.car_model.partials.action-buttons',
+                                                                ['record' => $value]
+                                                            )
                                                         </td>
                                                     </tr>
                                                 @empty
@@ -303,19 +296,10 @@
                                                 </div>
 
 
-                                                <div class="row mt-3">
-                                                    <div class="col-12 text-center">
-                                                        <a href="{{ route('admin.car_model.edit', $value->model_id) }}"
-                                                            class="btn btn-primary btn-sm mx-1" style="min-width: 70px;">
-                                                            <i class="fas fa-edit"></i> تعديل
-                                                        </a>
-                                                        <a href="javascript:void(0)"
-                                                            class="btn btn-danger btn-sm mx-1 btnDelete"
-                                                            data-id="{{ $value->model_id }}" style="min-width: 70px;">
-                                                            <i class="fas fa-trash"></i> حذف
-                                                        </a>
-                                                    </div>
-                                                </div>
+                                                @include('admin.car_model.partials.action-buttons', [
+                                                    'record' => $value,
+                                                ])
+
                                             </div>
                                         </div>
                                     @empty
@@ -342,66 +326,10 @@
     </section>
 @endsection
 
+
+
+
 @section('script')
-    <script type="text/javascript">
-        $('body').delegate('.btnDelete', 'click', function() {
-            let button = $(this);
-            const confirmMessage = 'هل أنت متأكد من حذف هذه الموديل ؟';
-
-            if (typeof showCustomConfirm === 'function') {
-                showCustomConfirm(confirmMessage, function() {
-                    subServiceDelete(button);
-                }, 'تأكيد العملية');
-            } else {
-                if (confirm(confirmMessage)) {
-                    subServiceDelete(button);
-                }
-            }
-        });
-
-        function subServiceDelete(button) {
-            const carModelId = button.data('id');
-
-            $.ajax({
-                type: "POST",
-                url: "{{ url('admin/car_models/delete') }}/" + carModelId,
-                data: {
-                    _token: "{{ csrf_token() }}"
-                },
-                dataType: "json",
-                beforeSend: function() {
-                    button.prop('disabled', true)
-                        .html('<i class="fas fa-spinner fa-spin"></i>');
-                },
-                success: function(data) {
-                    if (data.success) {
-                        $('#table-container').load(location.href + ' #table-container > *');
-                        if (typeof showSuccess === 'function') {
-                            showSuccess('تم حذف الموديل  بنجاح');
-                        } else {
-                            alert('تم حذف الموديل  بنجاح');
-                        }
-                    } else {
-                        const errorMsg = 'حدث خطأ: ' + (data.message || 'فشل أثناء حذف الموديل ');
-                        if (typeof showError === 'function') {
-                            showError(errorMsg);
-                        } else {
-                            alert(errorMsg);
-                        }
-                    }
-                },
-                error: function(xhr, status, error) {
-                    const errorMsg = 'حدث خطأ أثناء الاتصال بالخادم: ' + error;
-                    if (typeof showError === 'function') {
-                        showError(errorMsg);
-                    } else {
-                        alert(errorMsg);
-                    }
-                },
-                complete: function() {
-                    button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
-                }
-            });
-        }
-    </script>
+    @include('admin.car_model.partials.scripts')
+ 
 @endsection

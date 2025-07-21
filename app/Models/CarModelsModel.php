@@ -32,13 +32,23 @@ class CarModelsModel extends Model
         return $this->belongsTo(CarMakesModel::class, 'make_id', 'make_id');
     }
 
-    // Relationship with ServiceNotes
+    // Access car make logo through relationship
+    public function getCarMakeLogo()
+    {
+        return $this->carMake ? $this->carMake->getCarMakeLogo() : null;
+    }
+
+    // Access car make name through relationship
+    public function getCarMakeName()
+    {
+        return $this->carMake ? $this->carMake->getCarMakeNameDisplayAttribute() : '';
+    }
 
     public static function getRecord()
     {
         $query = self::with('carMake')
             ->join('car_makes', 'car_makes.make_id', '=', 'car_models.make_id')
-            ->select('car_models.*', 'car_makes.name as car_make_name'); // تم الإضافة هنا
+            ->select('car_models.*', 'car_makes.name as car_make_name');
 
         // Filter by model_id
         if (request()->get('model_id')) {
@@ -70,9 +80,6 @@ class CarModelsModel extends Model
             ->paginate(20);
     }
 
-
-
-
     public function getNameForLang($lang)
     {
         $name = $this->getRawOriginal('name');
@@ -87,13 +94,11 @@ class CarModelsModel extends Model
         return '';
     }
 
-    // 2. UPDATE the getNameAttribute method in SubService.php:
     public function getNameAttribute($value)
     {
         if (is_string($value)) {
             $decoded = json_decode($value, true);
             if (is_array($decoded)) {
-                // Return based on current locale, fallback to Arabic, then English
                 $locale = app()->getLocale();
                 return $decoded[$locale] ?? $decoded['ar'] ?? $decoded['en'] ?? $value;
             }
@@ -101,12 +106,10 @@ class CarModelsModel extends Model
         return $value;
     }
 
-
-
     public static function getRecordByService($make_id)
     {
         return self::select('car_models.*')
-            ->where('car_models.status', '=', 1) // Active sub-car_makes
+            ->where('car_models.status', '=', 1)
             ->where('car_models.make_id', '=', $make_id)
             ->orderBy('car_models.name', 'asc')
             ->get();
@@ -139,8 +142,6 @@ class CarModelsModel extends Model
         return $query->first();
     }
 
-
-
     public function setNameAttribute($value)
     {
         if (is_array($value)) {
@@ -152,11 +153,10 @@ class CarModelsModel extends Model
 
     public function getCarModelNameDisplayAttribute()
     {
-        $value = $this->getAttributes()['name']; // Get raw value
+        $value = $this->getAttributes()['name'];
 
         if (is_string($value) && json_decode($value)) {
             $decoded = json_decode($value, true);
-            // Return Arabic first, then English, then first available
             return $decoded['ar'] ?? $decoded['en'] ?? reset($decoded);
         }
         return $value;
@@ -164,7 +164,7 @@ class CarModelsModel extends Model
 
     public function getCarModelNameLang($lang = 'ar')
     {
-        $value = $this->getAttributes()['name']; // Get raw value
+        $value = $this->getAttributes()['name'];
 
         if (is_string($value) && json_decode($value)) {
             $decoded = json_decode($value, true);

@@ -1,7 +1,7 @@
 {{-- Status Badge Component --}}
 @props([
-    'status',
-    'field' => 'status',
+    'status' => null,
+    'field' => null,
     'mappings' => null,
     'size' => 'normal'
 ])
@@ -19,11 +19,28 @@
     ];
     
     $statusMappings = $mappings ?? $defaultMappings;
-    $statusValue = is_object($status) ? $status->{$field} : $status;
+    
+    // Auto-detect status field if field is not specified and status is an object
+    if (is_object($status) && is_null($field)) {
+        $possibleFields = ['status', 'model_status', 'discount_status', 'order_status', 'payment_status', 'delivery_status'];
+        foreach ($possibleFields as $possibleField) {
+            if (property_exists($status, $possibleField)) {
+                $field = $possibleField;
+                break;
+            }
+        }
+        // Default to 'status' if no field found
+        $field = $field ?? 'status';
+    }
+    
+    $statusValue = is_object($status) ? ($status->{$field} ?? null) : $status;
 @endphp
+
+@if(!is_null($statusValue))
 
 @include('admin.partials.components.badges.generic-badge', [
     'value' => $statusValue,
     'mappings' => $statusMappings,
     'size' => $size
 ])
+@endif

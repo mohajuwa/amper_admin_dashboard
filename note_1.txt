@@ -1,867 +1,3843 @@
+sidbar is working greate in disktop mode , but others is not working like I want or like any other normal sidbar
+so I will provide you the blade , css and js codes to mak you know , thin you fix it 
 
-
-
-
-
-and here is the structure script is complate : 
+blade codes:
 [
-                #!/usr/bin/env python3
-            """
-            Script to create reusable Laravel Blade component structure
-            Place this file in resources/views/admin/ and run it
-            """
 
-            import os
-            import json
+app blade code : 
+[
+                    <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
 
-            def create_directory_structure():
-                """Create the directory structure for reusable components"""
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <meta name="csrf-token" content="{{ csrf_token() }}">
+                    <title>{{ $header_title ?? 'لوحة التحكم' }} - {{ config('app.name', 'متجر إلكتروني') }}</title>
+
                 
-                # Base directory (current directory when running from resources/views/admin)
-                base_dir = "."
-                
-                # Define the structure
-                structure = {
-                    "partials": {
-                        "components": {
-                            "tables": {},
-                            "forms": {},
-                            "cards": {},
-                            "badges": {},
-                            "buttons": {},
-                            "layouts": {}
-                        },
-                        "form-fields": {},
-                        "widgets": {},
-                        "scripts": {}
-                    }
-                }
-                
-                def create_dirs(path, structure_dict):
-                    """Recursively create directories"""
-                    for dir_name, sub_structure in structure_dict.items():
-                        dir_path = os.path.join(path, dir_name)
-                        if not os.path.exists(dir_path):
-                            os.makedirs(dir_path)
-                            print(f"✓ Created directory: {dir_path}")
-                        else:
-                            print(f"• Directory already exists: {dir_path}")
+
+                    <!-- Core CSS -->
+                    <link rel="stylesheet" href="{{ url('public/assets/plugins/fontawesome-free/css/all.min.css') }}">
+                    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+                    <link rel="stylesheet" href="{{ url('public/assets/dist/css/adminlte.min.css') }}">
+                    <link rel="stylesheet" href="{{ url('public/assets/plugins/summernote/summernote-bs4.min.css') }}">
+                    <link rel="stylesheet" href="{{ url('public/assets/css/admin-design-system.css') }}">
+                    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+                    <!-- Toast Notifications CSS -->
+                    <link rel="stylesheet" href="{{ url('public/assets/css/notifications.css') }}">
+
+                    @stack('styles')
+                    @yield('style')
+
+
+                </head>
+
+                <body class="hold-transition sidebar-mini layout-fixed rtl">
+                    <!-- Toast Container -->
+                    <div class="toast-container" id="toastContainer"></div>
+
+                    <!-- Confirm Modal Container -->
+                    <div class="custom-modal-overlay" id="modernConfirmModal">
+                        <div class="custom-modal">
+                            <div class="custom-modal-header">
+                                <div class="custom-modal-icon">
+                                    <i class="fas fa-question"></i>
+                                </div>
+                                <div class="custom-modal-title" id="modernConfirmTitle">تأكيد العملية</div>
+                            </div>
+                            <div class="custom-modal-body">
+                                <p id="modernConfirmMessage">هل أنت متأكد من القيام بهذا الإجراء؟</p>
+                            </div>
+                            <div class="custom-modal-actions">
+                                <button id="modernConfirmCancel" class="btn btn-danger">إلغاء</button>
+                                <button id="modernConfirmOk" class="btn btn-success">موافق</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wrapper" id="app">
+                        @include('admin.layouts.header')
+
+                        <!-- Sidebar Overlay for Mobile/Tablet -->
+                        <div class="sidebar-overlay"></div>
+
+                        @include('admin.layouts.sidebar')
+
+                        <div class="content-wrapper">
+                            @include('admin.layouts._message')
+
+                            @yield('content')
+                        </div>
+
+                        @include('admin.layouts.footer')
+                    </div>
+
+                    <!-- Core Scripts -->
+                    <script src="{{ url('public/assets/plugins/jquery/jquery.min.js') }}"></script>
+                    <script src="{{ url('public/assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+                    <script src="{{ url('public/assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
+                    <script src="{{ url('public/assets/dist/js/adminlte.js') }}"></script>
+                    <script src="{{ url('public/assets/plugins/chart.js/Chart.min.js') }}"></script>
+
+                    <!-- Our fixed consolidated scripts file -->
+                    <script src="{{ url('public/assets/js/scripts.js') }}"></script>
+
+
+                    {{-- Enhanced Flash Messages Handler Script --}}
+                    <script>
+                        /**
+                        * Enhanced Flash Message Handler with Global showNotification
+                        * Works both with and without redirections
+                        */
+
+                        class FlashMessageHandler {
+                            constructor() {
+                                this.baseUrl = '/admin'; // Adjust based on your admin prefix
+                                this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                                this.initializeGlobalFunctions();
+                            }
+
+                            /**
+                            * Initialize global notification functions
+                            */
+                            initializeGlobalFunctions() {
+                                // Make showNotification globally available
+                                window.showNotification = this.showNotification.bind(this);
+
+                                // Individual notification functions
+                                window.showSuccess = (message) => this.showNotification('success', message);
+                                window.showError = (message) => this.showNotification('error', message);
+                                window.showWarning = (message) => this.showNotification('warning', message);
+                                window.showInfo = (message) => this.showNotification('info', message);
+                                window.showPrimary = (message) => this.showNotification('primary', message);
+                                window.showSecondary = (message) => this.showNotification('secondary', message);
+                                window.showPaymentError = (message) => this.showNotification('payment-error', message);
+                                window.showValidationErrors = (errors) => this.showValidationErrors(errors);
+                                window.showCustomAlert = (message, type) => this.showNotification(type, message);
+                            }
+
+                            /**
+                            * Global showNotification function - works with or without redirect
+                            * @param {string} type - success, error, warning, info, payment-error, primary, secondary
+                            * @param {string} message - Message to display
+                            * @param {object} options - Additional options
+                            */
+                            showNotification(type, message, options = {}) {
+                                const titles = {
+                                    'success': 'نجح العمل',
+                                    'error': 'حدث خطأ',
+                                    'warning': 'تحذير',
+                                    'info': 'معلومات',
+                                    'payment-error': 'خطأ في الدفع',
+                                    'primary': 'إشعار',
+                                    'secondary': 'إشعار ثانوي'
+                                };
+
+                                const title = options.title || titles[type] || '';
+
+                                // Priority order: Custom toast > SweetAlert > Toastr > Native alert
+                                if (typeof window.showToast === 'function') {
+                                    window.showToast(type, title, message);
+                                } else if (typeof window.AlertHandler !== 'undefined') {
+                                    window.AlertHandler.show(type, message, title);
+                                } else if (typeof Swal !== 'undefined') {
+                                    const swalIcons = {
+                                        'success': 'success',
+                                        'error': 'error',
+                                        'warning': 'warning',
+                                        'info': 'info',
+                                        'payment-error': 'error',
+                                        'primary': 'info',
+                                        'secondary': 'question'
+                                    };
+
+                                    Swal.fire({
+                                        icon: swalIcons[type] || 'info',
+                                        title: title,
+                                        text: message,
+                                        confirmButtonText: 'موافق',
+                                        timer: type === 'success' ? (options.timer || 3000) : null,
+                                        showCloseButton: true,
+                                        allowOutsideClick: true
+                                    });
+                                } else if (typeof toastr !== 'undefined') {
+                                    toastr[type === 'payment-error' ? 'error' : type](message, title);
+                                } else {
+                                    alert((title ? title + ': ' : '') + message);
+                                }
+                            }
+
+                            /**
+                            * Show validation errors immediately
+                            * @param {array} errors 
+                            */
+                            showValidationErrors(errors) {
+                                const errorMessage = Array.isArray(errors) ? errors.join('\n') : errors;
+                                const title = 'أخطاء في التحقق';
+
+                                if (typeof window.showToast === 'function') {
+                                    window.showToast('error', title, errorMessage);
+                                } else if (typeof window.AlertHandler !== 'undefined') {
+                                    window.AlertHandler.show('error', errorMessage, title);
+                                } else if (typeof Swal !== 'undefined') {
+                                    const errorList = Array.isArray(errors) ? errors : [errors];
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: title,
+                                        html: '<div style="text-align: right;"><ul>' +
+                                            errorList.map(error => '<li>' + error + '</li>').join('') +
+                                            '</ul></div>',
+                                        confirmButtonText: 'موافق',
+                                        showCloseButton: true
+                                    });
+                                } else if (typeof toastr !== 'undefined') {
+                                    toastr.error('يرجى إصلاح الأخطاء التالية:\n' + errorMessage, title);
+                                } else {
+                                    alert(title + ':\n' + errorMessage);
+                                }
+                            }
+
+                            /**
+                            * Set flash message via AJAX route (for redirections)
+                            * @param {string} type - success, error, warning, info, payment-error, primary, secondary
+                            * @param {string} message - Message to display
+                            * @param {function} callback - Optional callback after setting message
+                            */
+                            async setFlashMessage(type, message, callback = null) {
+                                const routeMap = {
+                                    'success': '/set-flash-success',
+                                    'error': '/set-flash-error',
+                                    'warning': '/set-flash-warning',
+                                    'info': '/set-flash-info',
+                                    'payment-error': '/set-flash-payment-error',
+                                    'primary': '/set-flash-primary',
+                                    'secondary': '/set-flash-secondary'
+                                };
+
+                                const route = routeMap[type];
+                                if (!route) {
+                                    console.error('Invalid flash message type:', type);
+                                    return;
+                                }
+
+                                try {
+                                    const response = await fetch(this.baseUrl + route, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': this.csrfToken,
+                                            'Accept': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            message
+                                        })
+                                    });
+
+                                    const result = await response.json();
+
+                                    if (result.status === 'ok') {
+                                        // Show immediate feedback as well
+                                        this.showNotification(type, message);
+
+                                        if (callback) {
+                                            callback();
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('Error setting flash message:', error);
+                                    // Fallback to immediate display
+                                    this.showNotification(type, message);
+                                }
+                            }
+
+                            /**
+                            * Set validation errors via AJAX route (for redirections)
+                            * @param {array} errors - Array of error messages
+                            * @param {function} callback - Optional callback
+                            */
+                            async setValidationErrors(errors, callback = null) {
+                                try {
+                                    const response = await fetch(this.baseUrl + '/set-validation-errors', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': this.csrfToken,
+                                            'Accept': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            errors
+                                        })
+                                    });
+
+                                    const result = await response.json();
+
+                                    if (result.status === 'ok') {
+                                        // Show immediate feedback
+                                        this.showValidationErrors(errors);
+
+                                        if (callback) {
+                                            callback();
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('Error setting validation errors:', error);
+                                    // Fallback to immediate display
+                                    this.showValidationErrors(errors);
+                                }
+                            }
+
+                            /**
+                            * Redirect with flash message - stores in sessionStorage for next page
+                            * @param {string} message 
+                            * @param {string} type 
+                            * @param {string} url 
+                            */
+                            redirectWithFlash(message, type, url) {
+                                if (typeof(Storage) !== "undefined") {
+                                    sessionStorage.setItem('alertMessage', message);
+                                    sessionStorage.setItem('alertType', type);
+                                }
+                                window.location.href = url;
+                            }
+
+                            /**
+                            * Enhanced form submission with flash messages
+                            * @param {jQuery} $form - Form element
+                            * @param {object} options - Additional options
+                            */
+                            submitFormWithFlash($form, options = {}) {
+                                const $btn = $form.find('button[type="submit"]');
+                                const originalText = $btn.html();
+                                const loadingText = options.loadingText || '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
+
+                                // Disable button and show loading
+                                $btn.prop('disabled', true).html(loadingText);
+
+                                // Prepare form data
+                                let formData;
+                                if ($form.attr('enctype') === 'multipart/form-data') {
+                                    formData = new FormData($form[0]);
+                                } else {
+                                    formData = $form.serialize();
+                                }
+
+                                return $.ajax({
+                                    url: $form.attr('action') || window.location.href,
+                                    type: $form.attr('method') || 'POST',
+                                    data: formData,
+                                    contentType: $form.attr('enctype') === 'multipart/form-data' ? false :
+                                        'application/x-www-form-urlencoded; charset=UTF-8',
+                                    processData: $form.attr('enctype') === 'multipart/form-data' ? false : true,
+                                    success: (response) => {
+                                        // Handle success message
+                                        if (response.message) {
+                                            if (response.redirect) {
+                                                // Use redirect with flash for navigation
+                                                this.redirectWithFlash(response.message, response.type || 'success',
+                                                    response.redirect);
+                                            } else {
+                                                // Show immediate notification
+                                                this.showNotification(response.type || 'success', response.message);
+
+                                                if (options.resetForm !== false) {
+                                                    $form[0].reset();
+                                                }
+                                                $btn.prop('disabled', false).html(originalText);
+                                            }
+                                        } else if (response.redirect) {
+                                            // Direct redirect without message
+                                            setTimeout(() => {
+                                                window.location.href = response.redirect;
+                                            }, options.redirectDelay || 500);
+                                        } else {
+                                            // Reset form and button
+                                            $btn.prop('disabled', false).html(originalText);
+                                        }
+                                    },
+                                    error: (xhr) => {
+                                        $btn.prop('disabled', false).html(originalText);
+
+                                        const response = xhr.responseJSON;
+                                        let message = options.defaultErrorMessage || 'حدث خطأ أثناء المعالجة';
+
+                                        if (response) {
+                                            if (response.errors) {
+                                                if (Array.isArray(response.errors)) {
+                                                    this.showValidationErrors(response.errors);
+                                                    return;
+                                                } else if (typeof response.errors === 'object') {
+                                                    // Laravel validation errors format
+                                                    const errors = Object.values(response.errors).flat();
+                                                    this.showValidationErrors(errors);
+                                                    return;
+                                                }
+                                            } else if (response.message) {
+                                                message = response.message;
+                                            }
+                                        }
+
+                                        this.showNotification('error', message);
+                                    }
+                                });
+                            }
+                        }
+
+                        // Initialize global flash message handler
+                        window.FlashHandler = new FlashMessageHandler();
+
+                        // Enhanced jQuery integration
+                        $(document).ready(function() {
+                            // Auto-handle forms with data-flash attribute
+                            $(document).on('submit', 'form[data-flash="true"]', function(e) {
+                                e.preventDefault();
+
+                                const $form = $(this);
+                                const options = {
+                                    loadingText: $form.data('loading-text'),
+                                    defaultErrorMessage: $form.data('error-message'),
+                                    redirectDelay: parseInt($form.data('redirect-delay')) || 1500,
+                                    resetForm: $form.data('reset-form') !== false
+                                };
+
+                                window.FlashHandler.submitFormWithFlash($form, options);
+                            });
+
+                            // Handle existing flash messages from server
+                            @if (session('success'))
+                                window.showNotification('success', @json(session('success')));
+                            @endif
+
+                            @if (session('error'))
+                                window.showNotification('error', @json(session('error')));
+                            @endif
+
+                            @if (session('warning'))
+                                window.showNotification('warning', @json(session('warning')));
+                            @endif
+
+                            @if (session('info'))
+                                window.showNotification('info', @json(session('info')));
+                            @endif
+
+                            @if (session('payment-error'))
+                                window.showNotification('payment-error', @json(session('payment-error')));
+                            @endif
+
+                            @if (session('primary'))
+                                window.showNotification('primary', @json(session('primary')));
+                            @endif
+
+                            @if (session('secondary'))
+                                window.showNotification('secondary', @json(session('secondary')));
+                            @endif
+
+                            @if (session('validation_errors'))
+                                window.showValidationErrors(@json(session('validation_errors')));
+                            @endif
+
+                            @if ($errors->any())
+                                window.showValidationErrors(@json($errors->all()));
+                            @endif
+
+                            // Check for saved alerts from sessionStorage (after redirects)
+                            if (typeof(Storage) !== "undefined") {
+                                const msg = sessionStorage.getItem('alertMessage');
+                                const type = sessionStorage.getItem('alertType');
+                                if (msg && type) {
+                                    window.showNotification(type, msg);
+                                    sessionStorage.removeItem('alertMessage');
+                                    sessionStorage.removeItem('alertType');
+                                }
+                            }
+                        });
+
+                        // Utility functions for quick access (both immediate and with redirect)
+                        window.setFlashSuccess = (message, callback) => window.FlashHandler.setFlashMessage('success', message, callback);
+                        window.setFlashError = (message, callback) => window.FlashHandler.setFlashMessage('error', message, callback);
+                        window.setFlashWarning = (message, callback) => window.FlashHandler.setFlashMessage('warning', message, callback);
+                        window.setFlashInfo = (message, callback) => window.FlashHandler.setFlashMessage('info', message, callback);
+
+                        // Redirect with flash message helper
+                        window.redirectWithFlash = (message, type, url) => window.FlashHandler.redirectWithFlash(message, type, url);
+                    </script>
+
+                    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+                    <script>
+                        $(function() {
+                            $('.select2').select2({
+                                dir: "rtl",
+                                width: '100%',
+                                placeholder: 'اختر من القائمة',
+                                allowClear: true
+                            });
+                        });
+                    </script>
+
+                    @stack('scripts')
+                    @yield('script')
+
+                </body>
+
+                </html>
+]
+sidbar blade code: 
+[
+                @section('style')
+            @endsection
+
+            <aside class="main-sidebar sidebar-dark-primary elevation-4">
+                @php
+                    use App\Models\Admin;
+                    use App\Models\User;
+                    use App\Models\OrderModel;
+                    use App\Models\ContactUsModel;
+                    use App\Models\NotificationModel;
+
+                    $systemSetting = App\Models\SystemSettingModel::getSingle();
+                    $currentSegment = Request::segment(2);
+                    $currentAction = Request::segment(3);
+                    $routeName = Route::currentRouteName();
+
+                    $adminCount = Admin::count();
+                    $customerCount = User::count();
+                    $pendingOrdersCount = OrderModel::where('order_status', '0')->count();
+                    $unreadContactsCount = ContactUsModel::where('is_read', 0)->count();
+                    $unreadNotificationsCount = NotificationModel::where('notification_read', 0)->count();
+                @endphp
+
+
+                <div class="sidebar">
+                    <!-- Sidebar Search -->
+                    <div class="form-inline sidebar-search mb-3" style="border-radius: 25px; overflow: hidden;">
+                        <div class="input-group w-100">
+                            <input class="form-control form-control-sidebar bg-dark border-0" type="search"
+                                placeholder="{{ __('البحث في القائمة...') }}" aria-label="Search"
+                                style="border-top-left-radius: 25px; border-bottom-left-radius: 25px; padding-left: 15px;">
+                            <div class="input-group-append">
+                                <button class="btn btn-sidebar bg-primary border-0"
+                                    style="border-top-right-radius: 25px; border-bottom-right-radius: 25px;">
+                                    <i class="fas fa-search fa-fw"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Menu -->
+                    <nav class="mt-2">
+                        <ul class="nav nav-pills nav-sidebar flex-column nav-flat nav-child-indent">
+
+                            <!-- Dashboard -->
+                            <li class="nav-item">
+                                <a href="{{ route('admin.dashboard') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.dashboard') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-tachometer-alt text-info"></i>
+                                    <p class="font-weight-medium">{{ __('لوحة التحكم') }}</p>
+                                </a>
+                            </li>
+
+                            <!-- Analytics & Reports -->
+                            {{-- <li class="nav-item">
+                                <a href="{{ route('admin.analytics') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.analytics') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-chart-line text-success"></i>
+                                    <p class="font-weight-medium">{{ __('التحليلات') }}</p>
+                                </a>
+                            </li> --}}
+
+                            <!-- إدارة المستخدمين -->
+                            <li class="nav-header mt-3">
+                                <i class="fas fa-users text-muted mr-2"></i>
+                                {{ __('إدارة المستخدمين') }}
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.admin.list') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.admin') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-user-shield text-warning"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('المديرين') }}
+                                        @if (isset($adminCount) && $adminCount > 0)
+                                            <span class="badge badge-info right">{{ $adminCount }}</span>
+                                        @endif
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.vendor.list') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.vendor') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-handshake text-success"></i>
+                                    <p class="font-weight-medium">{{ __(' الشركاء') }}</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.customer.list') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.customer') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-users text-primary"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('العملاء') }}
+                                        @if (isset($customerCount) && $customerCount > 0)
+                                            <span class="badge badge-success right">{{ $customerCount }}</span>
+                                        @endif
+                                    </p>
+                                </a>
+                            </li>
+                            <!-- إدارة السيارات -->
+                            <li class="nav-header mt-3">
+                                <i class="fas fa-car text-muted mr-2"></i>
+                                {{ __('إدارة السيارات') }}
+                            </li>
+
+                            <!-- إدارة السيارات - Car Makes & Models -->
+                            <li class="nav-item {{ Str::contains($routeName, ['admin.car_make', 'admin.car_model']) ? 'menu-open' : '' }}"
+                                id="cars-menu">
+                                <a href="javascript:void(0);"
+                                    class="nav-link {{ Str::contains($routeName, ['admin.car_make', 'admin.car_model']) ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-car-side text-indigo"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('إدارة السيارات') }}
+                                        <i class="fas fa-angle-left left" id="cars-arrow"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.car_make.list') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.car_make') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-teal"></i>
+                                            <p>{{ __('ماركات السيارات') }}</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.car_model.list') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.car_model') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-teal"></i>
+                                            <p>{{ __('موديلات السيارات') }}</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- التجارة الإلكترونية -->
+                            <li class="nav-header mt-3">
+                                <i class="fas fa-shopping-cart text-muted mr-2"></i>
+                                {{ __('التجارة الإلكترونية') }}
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.order.list') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.order') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-shopping-bag text-success"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('الطلبات') }}
+                                        @if (isset($pendingOrdersCount) && $pendingOrdersCount > 0)
+                                            <span class="badge badge-danger right">{{ $pendingOrdersCount }}</span>
+                                        @endif
+                                    </p>
+                                </a>
+                            </li>
+
+                            <!-- إدارة الخدمات - FIXED STRUCTURE -->
+                            <li class="nav-item {{ Str::contains($routeName, ['admin.service', 'admin.sub_service', 'admin.product', 'admin.brand', 'admin.color']) ? 'menu-open' : '' }}"
+                                id="products-menu">
+                                <a href="javascript:void(0);"
+                                    class="nav-link {{ Str::contains($routeName, ['admin.service', 'admin.sub_service', 'admin.product', 'admin.brand', 'admin.color']) ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-box-open text-info"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('إدارة الخدمات') }}
+                                        <i class="fas fa-angle-left left" id="products-arrow"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.service.list') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.service') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-cyan"></i>
+                                            <p>{{ __('الخدمات') }}</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.sub_service.list') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.sub_service') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-cyan"></i>
+                                            <p>{{ __('الخدمات الفرعية') }}</p>
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.product_by_car.list') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.product_by_car') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-cyan"></i>
+                                            <p>{{ __('خدمات حسب السنة   ') }}</p>
+                                        </a>
+                                    </li>
+
+                                </ul>
+                            </li>
+
+                            <!-- التسويق والعروض -->
+                            <li class="nav-header mt-3">
+                                <i class="fas fa-bullhorn text-muted mr-2"></i>
+                                {{ __('التسويق والعروض') }}
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.discount-codes.list') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.discount-codes') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-tags text-warning"></i>
+                                    <p class="font-weight-medium">{{ __('أكواد الخصم') }}</p>
+                                </a>
+                            </li>
+
                         
-                        if isinstance(sub_structure, dict) and sub_structure:
-                            create_dirs(dir_path, sub_structure)
-                
-                print("🚀 Creating Laravel Blade Component Structure...")
-                print("=" * 50)
-                
-                create_dirs(base_dir, structure)
-                
-                # Create a manifest file to track the structure
-                manifest = {
-                    "created_at": "2024",
-                    "description": "Reusable Laravel Blade Components Structure",
-                    "components": {
-                        "tables": [
-                            "generic-list-table",
-                            "responsive-data-table", 
-                            "mobile-cards-table",
-                            "table-header",
-                            "table-actions"
-                        ],
-                        "forms": [
-                            "generic-search-form",
-                            "filter-form",
-                            "bulk-actions"
-                        ],
-                        "cards": [
-                            "info-card",
-                            "stat-card",
-                            "mobile-record-card"
-                        ],
-                        "badges": [
-                            "status-badge",
-                            "popularity-badge",
-                            "generic-badge"
-                        ],
-                        "buttons": [
-                            "action-buttons",
-                            "crud-buttons",
-                            "filter-buttons"
-                        ],
-                        "layouts": [
-                            "page-wrapper",
-                            "content-section",
-                            "header-section"
-                        ],
-                        "form-fields": [
-                            "text-input",
-                            "number-input", 
-                            "select-input",
-                            "date-input",
-                            "checkbox-input",
-                            "textarea-input",
-                            "file-input"
-                        ],
-                        "widgets": [
-                            "pagination-widget",
-                            "loading-spinner",
-                            "no-data-widget",
-                            "confirmation-modal"
-                        ],
-                        "scripts": [
-                            "generic-table-manager",
-                            "form-validator",
-                            "ajax-handler"
-                        ]
+                        
+                            <!-- النظام والإعدادات -->
+                            <li class="nav-header mt-3">
+                                <i class="fas fa-cogs text-muted mr-2"></i>
+                                {{ __('النظام والإعدادات') }}
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.shipping_charge.list') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.shipping_charge') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-truck text-info"></i>
+                                    <p class="font-weight-medium">{{ __('رسوم الشحن') }}</p>
+                                </a>
+                            </li>
+
+                        
+
+                            <!-- الرسائل والإشعارات -->
+                            <li class="nav-header mt-3">
+                                <i class="fas fa-bell text-muted mr-2"></i>
+                                {{ __('الرسائل والإشعارات') }}
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.contact.list') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.contact') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-envelope text-primary"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('رسائل التواصل') }}
+                                        @if (isset($unreadContactsCount) && $unreadContactsCount > 0)
+                                            <span class="badge badge-warning right">{{ $unreadContactsCount }}</span>
+                                        @endif
+                                    </p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.notifications') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.notifications') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-bell text-warning"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('الإشعارات') }}
+                                        @if (isset($unreadNotificationsCount) && $unreadNotificationsCount > 0)
+                                            <span class="badge badge-danger right">{{ $unreadNotificationsCount }}</span>
+                                        @endif
+                                    </p>
+                                </a>
+                            </li>
+
+                            <!-- الإعدادات المتقدمة - FIXED STRUCTURE -->
+                            <li class="nav-item {{ Str::contains($routeName, ['admin.settings']) ? 'menu-open' : '' }}"
+                                id="settings-menu">
+                                <a href="javascript:void(0);"
+                                    class="nav-link {{ Str::contains($routeName, ['admin.settings']) ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-sliders-h text-danger"></i>
+                                    <p class="font-weight-medium">
+                                        {{ __('الإعدادات المتقدمة') }}
+                                        <i class="fas fa-angle-left left" id="settings-arrow"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.settings.system') }}"
+                                            class="nav-link {{ $routeName === 'admin.settings.system' ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-orange"></i>
+                                            <p>{{ __('إعدادات النظام') }}</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.settings.homepage') }}"
+                                            class="nav-link {{ $routeName === 'admin.settings.homepage' ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-orange"></i>
+                                            <p>{{ __('إعدادات النظام') }}</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.settings.email') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.settings.email') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-orange"></i>
+                                            <p>{{ __('إعدادات البريد الإلكتروني') }}</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.settings.payment') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.settings.payment') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-orange"></i>
+                                            <p>{{ __('إعدادات الدفع') }}</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.settings.cache') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.settings.cache') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-orange"></i>
+                                            <p>{{ __('وسائل التواصل الاجتماعي') }}</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.settings.backup') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.settings.backup') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-orange"></i>
+                                            <p>{{ __('إعدادات SEO') }}</p>
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.maintenance.index') }}"
+                                            class="nav-link {{ Str::contains($routeName, 'admin.maintenance') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon text-orange"></i>
+                                            <p>{{ __('وضع الصيانة') }}</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- تسجيل الخروج -->
+                            <li class="nav-header mt-3">
+                                <i class="fas fa-sign-out-alt text-muted mr-2"></i>
+                                {{ __('الحساب') }}
+                            </li>
+
+                            {{-- <li class="nav-item">
+                                <a href="{{ route('admin.profile') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.profile') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-user-cog text-info"></i>
+                                    <p class="font-weight-medium">{{ __('الملف الشخصي') }}</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.change.password') }}"
+                                    class="nav-link {{ Str::contains($routeName, 'admin.change.password') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-key text-warning"></i>
+                                    <p class="font-weight-medium">{{ __('تغيير كلمة المرور') }}</p>
+                                </a>
+                            </li> --}}
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.logout') }}" class="nav-link"
+                                    onclick="return confirm('{{ __('هل أنت متأكد من تسجيل الخروج؟') }}')">
+                                    <i class="nav-icon fas fa-sign-out-alt text-danger"></i>
+                                    <p class="font-weight-medium">{{ __('تسجيل الخروج') }}</p>
+                                </a>
+                            </li>
+
+                        </ul>
+                    </nav>
+                </div>
+            </aside>
+
+
+
+            @section('script')
+                <script>
+                    // Initialize menu system when document is ready
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Initialize menu click handlers
+                        if (typeof initializeMenuClickHandlers === 'function') {
+                            initializeMenuClickHandlers();
+                        }
+
+                        // Fix menu arrows
+                        if (typeof fixMenuArrows === 'function') {
+                            fixMenuArrows();
+                        }
+
+                        console.log('Sidebar menu initialized');
+                    });
+                </script>
+            @endsection
+]
+]
+
+js code : 
+[
+                // ============================================
+            // ADMIN SIDEBAR - CLEAN & FIXED VERSION
+            // ============================================
+
+            (function () {
+            'use strict';
+
+            // ============================================
+            // DEVICE TYPE DETECTION
+            // ============================================
+            function getDeviceType() {
+                const width = window.innerWidth;
+                if (width < 768) return 'mobile';
+                if (width < 992) return 'tablet';
+                return 'desktop';
+            }
+
+            // ============================================
+            // MOBILE SIDEBAR FUNCTIONS
+            // ============================================
+            function openMobileSidebar() {
+                const $sidebar = $('.main-sidebar');
+                const $overlay = $('.sidebar-overlay');
+                const $body = $('body');
+
+                console.log('Opening mobile sidebar');
+
+                $sidebar.addClass('sidebar-open');
+                $overlay.addClass('show');
+                $body.addClass('sidebar-open').css('overflow', 'hidden');
+            }
+
+            function closeMobileSidebar() {
+                const $sidebar = $('.main-sidebar');
+                const $overlay = $('.sidebar-overlay');
+                const $body = $('body');
+
+                console.log('Closing mobile sidebar');
+
+                $sidebar.removeClass('sidebar-open');
+                $overlay.removeClass('show');
+                $body.removeClass('sidebar-open').css('overflow', '');
+            }
+
+            // ============================================
+            // MENU TOGGLE FUNCTION
+            // ============================================
+            function toggleMenu(menuElement) {
+                if (!menuElement) return;
+
+                const $menu = $(menuElement);
+                const $arrow = $menu.children('.nav-link').find('i.fas');
+                const $treeview = $menu.children('.nav-treeview');
+
+                if (!$arrow.length || !$treeview.length) return;
+
+                // Close other open menus
+                $('[id$="-menu"]').not($menu).each(function () {
+                const $otherMenu = $(this);
+                const $otherArrow = $otherMenu.children('.nav-link').find('i.fas');
+                const $otherTreeview = $otherMenu.children('.nav-treeview');
+
+                $otherMenu.removeClass('menu-open');
+                $otherArrow.removeClass('fa-angle-down').addClass('fa-angle-left');
+                $otherTreeview.slideUp(200);
+                });
+
+                // Toggle current menu
+                const isOpen = $menu.hasClass('menu-open');
+
+                if (isOpen) {
+                // Close menu
+                $menu.removeClass('menu-open');
+                $arrow.removeClass('fa-angle-down').addClass('fa-angle-left');
+                $treeview.slideUp(200);
+                } else {
+                // Open menu
+                $menu.addClass('menu-open');
+                $arrow.removeClass('fa-angle-left').addClass('fa-angle-down');
+                $treeview.slideDown(200);
+                }
+            }
+
+            // ============================================
+            // INITIALIZE MENU HANDLERS
+            // ============================================
+            function initializeMenuHandlers() {
+                // Remove existing handlers
+                $('[id$="-menu"] > .nav-link').off('click.menuToggle');
+
+                // Add new handlers
+                $('[id$="-menu"] > .nav-link').on('click.menuToggle', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const menuElement = $(this).parent('[id$="-menu"]')[0];
+                toggleMenu(menuElement);
+                });
+
+                console.log('Menu handlers initialized');
+            }
+
+            // ============================================
+            // FIX MENU ARROWS AND STATES
+            // ============================================
+            function fixMenuArrows() {
+                const menuIds = ['products-menu', 'blog-menu', 'settings-menu'];
+
+                menuIds.forEach(function (menuId) {
+                const $menu = $('#' + menuId);
+                if (!$menu.length) return;
+
+                const $arrow = $menu.children('.nav-link').find('i.fas');
+                const $treeview = $menu.children('.nav-treeview');
+
+                if (!$arrow.length || !$treeview.length) return;
+
+                // Clean up arrow classes
+                $arrow.removeClass('fa-angle-left fa-angle-down');
+
+                // Ensure proper positioning
+                if (!$arrow.hasClass('left')) {
+                    $arrow.addClass('left');
+                }
+
+                // Set correct state based on menu-open class
+                if ($menu.hasClass('menu-open')) {
+                    $arrow.addClass('fa-angle-down');
+                    $treeview.show();
+                } else {
+                    $arrow.addClass('fa-angle-left');
+                    $treeview.hide();
+                }
+                });
+
+                console.log('Menu arrows fixed');
+            }
+
+            // ============================================
+            // MOBILE SIDEBAR TOGGLE
+            // ============================================
+            function initializeSidebarToggle() {
+                // Remove existing handlers
+                $(document).off('click.pushmenu');
+                $(document).off('click.overlay');
+                $(document).off('keydown.pushmenu');
+
+                // Sidebar toggle button
+                $(document).on('click.pushmenu', '[data-widget="pushmenu"]', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const deviceType = getDeviceType();
+                const $body = $('body');
+
+                console.log('Push menu clicked, device type:', deviceType);
+
+                if (deviceType === 'desktop') {
+                    // Desktop: toggle collapse
+                    $body.toggleClass('sidebar-collapse');
+                } else {
+                    // Mobile/Tablet: toggle sidebar
+                    const $sidebar = $('.main-sidebar');
+                    if ($sidebar.hasClass('sidebar-open')) {
+                    closeMobileSidebar();
+                    } else {
+                    openMobileSidebar();
                     }
                 }
-                
-                with open(os.path.join(base_dir, "partials", "component-manifest.json"), "w", encoding='utf-8') as f:
-                    json.dump(manifest, f, indent=2, ensure_ascii=False)
-                
-                print("\n" + "=" * 50)
-                print("✅ Structure created successfully!")
-                print("📄 Component manifest saved to: partials/component-manifest.json")
-                print("\n📝 Next step: Run 'fill_components.py' to populate the components")
-                
-                return True
+                });
 
-            if __name__ == "__main__":
-                try:
-                    create_directory_structure()
-                except Exception as e:
-                    print(f"❌ Error creating structure: {str(e)}")
-                    exit(1)
+                // Overlay click to close
+                $(document).on('click.overlay', '.sidebar-overlay', function (e) {
+                e.stopPropagation();
+                const deviceType = getDeviceType();
+                if (deviceType !== 'desktop') {
+                    closeMobileSidebar();
+                }
+                });
+
+                // Escape key to close
+                $(document).on('keydown.pushmenu', function (e) {
+                if (e.key === 'Escape') {
+                    const deviceType = getDeviceType();
+                    const $sidebar = $('.main-sidebar');
+                    if (deviceType !== 'desktop' && $sidebar.hasClass('sidebar-open')) {
+                    closeMobileSidebar();
+                    }
+                }
+                });
+
+                // Prevent sidebar from closing when clicking inside
+                $('.main-sidebar').on('click', function (e) {
+                e.stopPropagation();
+                });
+
+                console.log('Sidebar toggle initialized');
+            }
+
+            // ============================================
+            // HANDLE WINDOW RESIZE
+            // ============================================
+            function handleWindowResize() {
+                let previousDeviceType = getDeviceType();
+
+                $(window).on('resize.pushmenu', function () {
+                const currentDeviceType = getDeviceType();
+
+                if (previousDeviceType !== currentDeviceType) {
+                    const $body = $('body');
+                    const $sidebar = $('.main-sidebar');
+                    const $overlay = $('.sidebar-overlay');
+
+                    // Clean up states when switching device types
+                    if (currentDeviceType === 'desktop') {
+                    // Switching to desktop
+                    $sidebar.removeClass('sidebar-open');
+                    $overlay.removeClass('show');
+                    $body.removeClass('sidebar-open').css('overflow', '');
+                    } else {
+                    // Switching to mobile/tablet
+                    $body.removeClass('sidebar-collapse');
+                    closeMobileSidebar();
+                    }
+
+                    previousDeviceType = currentDeviceType;
+                    console.log('Device type changed to:', currentDeviceType);
+                }
+                });
+            }
+
+            // ============================================
+            // INITIALIZATION
+            // ============================================
+            function initializeSidebar() {
+                console.log('Initializing sidebar...');
+
+                // Initialize menu handlers
+                initializeMenuHandlers();
+
+                // Fix menu arrows and states
+                fixMenuArrows();
+
+                // Initialize sidebar toggle
+                initializeSidebarToggle();
+
+                // Handle window resize
+                handleWindowResize();
+
+                console.log('Sidebar initialization complete');
+            }
+
+            // ============================================
+            // DOCUMENT READY
+            // ============================================
+            $(document).ready(function () {
+                console.log('DOM Ready - Initializing sidebar');
+
+                // Initialize sidebar
+                initializeSidebar();
+
+                // Initialize other admin features
+                initializeAdminFeatures();
+            });
+
+            // ============================================
+            // OTHER ADMIN FEATURES
+            // ============================================
+            function initializeAdminFeatures() {
+                // Initialize Summernote with Arabic support
+                if (typeof $.fn.summernote !== 'undefined') {
+                $('.editor').summernote({
+                    height: 300,
+                    direction: 'rtl',
+                    lang: 'ar-AR',
+                    toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture']],
+                    ['view', ['fullscreen', 'codeview', 'help']]
+                    ]
+                });
+                }
+
+                // Auto-hide alerts after 5 seconds
+                setTimeout(function () {
+                // This correctly ignores the permanent alerts and only hides the temporary ones.
+                $('.alert:not(.alert-permanent)').fadeOut('slow');
+                }, 5000);
+                // CSRF token for AJAX requests
+                $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+                });
+
+                // Form loading states
+                $('form').on('submit', function () {
+                const $submitBtn = $(this).find('button[type="submit"]');
+                const originalText = $submitBtn.text();
+
+                $submitBtn.prop('disabled', true)
+                    .html('<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...');
+
+                setTimeout(function () {
+                    $submitBtn.prop('disabled', false).text(originalText);
+                }, 30000);
+                });
+
+                // Enhanced dropdown behavior
+                $('.dropdown-toggle').on('click', function (e) {
+                e.stopPropagation();
+                const $dropdown = $(this).next('.dropdown-menu');
+                $('.dropdown-menu').not($dropdown).removeClass('show');
+                $dropdown.toggleClass('show');
+                });
+
+                $(document).on('click', function (e) {
+                if (!$(e.target).closest('.dropdown').length) {
+                    $('.dropdown-menu').removeClass('show');
+                }
+                });
+
+                // Smooth scrolling for anchor links
+                $('a[href^="#"]').on('click', function (e) {
+                const href = $(this).attr('href');
+                if (href === "#" || href === "") return;
+
+                const target = $(href);
+                if (target.length) {
+                    e.preventDefault();
+                    $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                    }, 500);
+                }
+                });
+
+                // Add fade-in animation to content
+                $('.content-wrapper').addClass('fade-in');
+
+                // Process flash messages
+                processFlashMessages();
+
+                console.log('Admin features initialized');
+            }
+            (function () {
+                'use strict';
+
+                // Ensure toast container exists
+                function ensureToastContainer() {
+                let toastContainer = document.getElementById('toastContainer');
+                if (!toastContainer) {
+                    toastContainer = document.createElement('div');
+                    toastContainer.id = 'toastContainer';
+                    toastContainer.className = 'toast-container';
+                    document.body.appendChild(toastContainer);
+                }
+                return toastContainer;
+                }
+
+                // Ensure custom confirm modal exists
+                function ensureCustomModal() {
+                let customModal = document.getElementById('customConfirmModal');
+                if (!customModal) {
+                    customModal = document.createElement('div');
+                    customModal.id = 'customConfirmModal';
+                    customModal.className = 'custom-modal-overlay';
+                    customModal.innerHTML = `
+                            <div class="custom-modal">
+                                <div class="custom-modal-header">
+                                    <div class="custom-modal-icon">
+                                        <i class="fas fa-question"></i>
+                                    </div>
+                                    <div class="custom-modal-title" id="customConfirmTitle">تأكيد العملية</div>
+                                </div>
+                                <div class="custom-modal-body">
+                                    <p id="customConfirmMessage">هل أنت متأكد من القيام بهذا الإجراء...؟</p>
+                                </div>
+                                <div class="custom-modal-actions">
+                                    <button id="customConfirmCancel" class="btn btn-secondary">إلغاء</button>
+                                    <button id="customConfirmOk" class="btn btn-primary">موافق</button>
+                                </div>
+                            </div>
+                        `;
+                    document.body.appendChild(customModal);
+                }
+                return customModal;
+                }
+
+                let confirmCallback = null;
+
+                // Remove Toast
+                function removeToast(toast) {
+                if (!toast || !toast.parentNode) return;
+
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                    }
+                }, 400);
+                }
+
+                // Show Toast Notification
+                window.showToast = function (type = 'info', title = '', message = '', duration = 5000) {
+                const toastContainer = ensureToastContainer();
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+
+                const icons = {
+                    success: 'fas fa-check',
+                    error: 'fas fa-times',
+                    warning: 'fas fa-exclamation',
+                    info: 'fas fa-info'
+                };
+
+                toast.innerHTML = `
+                        <div class="toast-header">
+                            <div class="toast-icon">
+                                <i class="${icons[type]}"></i>
+                            </div>
+                            <div class="toast-title">${title}</div>
+                            <button class="toast-close" type="button">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="toast-body">${message}</div>
+                        <div class="toast-progress">
+                            <div class="toast-progress-bar"></div>
+                        </div>
+                    `;
+
+                // Add close event
+                toast.querySelector('.toast-close').onclick = function () {
+                    removeToast(toast);
+                };
+
+                toastContainer.appendChild(toast);
+
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+
+                // Progress bar animation
+                const progressBar = toast.querySelector('.toast-progress-bar');
+                setTimeout(() => {
+                    progressBar.style.transitionDuration = `${duration}ms`;
+                    progressBar.style.transform = 'translateX(0)';
+                }, 200);
+
+                // Auto remove
+                setTimeout(() => {
+                    removeToast(toast);
+                }, duration);
+
+                return toast;
+                };
+
+                // Show Custom Confirmation Modal
+                window.showCustomConfirm = function (message, callback, title = 'تأكيد العملية') {
+                const customModal = ensureCustomModal();
+
+                document.getElementById('customConfirmTitle').textContent = title;
+                document.getElementById('customConfirmMessage').textContent = message;
+                confirmCallback = callback;
+                customModal.classList.add('show');
+                };
+
+                // Quick Alert Functions
+                window.showSuccess = function (message, title = 'نجح العمل') {
+                return showToast('success', title, message);
+                };
+
+                window.showError = function (message, title = 'حدث خطأ') {
+                return showToast('error', title, message);
+                };
+
+                window.showWarning = function (message, title = 'تحذير') {
+                return showToast('warning', title, message);
+                };
+
+                window.showInfo = function (message, title = 'معلومات') {
+                return showToast('info', title, message);
+                };
+
+                // Initialize custom modal events
+                function initCustomModal() {
+                const customModal = ensureCustomModal();
+
+                document.getElementById('customConfirmOk').onclick = function () {
+                    customModal.classList.remove('show');
+                    if (confirmCallback) {
+                    confirmCallback();
+                    confirmCallback = null;
+                    }
+                };
+
+                document.getElementById('customConfirmCancel').onclick = function () {
+                    customModal.classList.remove('show');
+                    confirmCallback = null;
+                };
+
+                customModal.onclick = function (e) {
+                    if (e.target === customModal) {
+                    customModal.classList.remove('show');
+                    confirmCallback = null;
+                    }
+                };
+                }
+
+                // Initialize immediately if DOM is ready, otherwise wait
+                if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initCustomModal);
+                } else {
+                initCustomModal();
+                }
+
+            })();
+            // ============================================
+            // FLASH MESSAGE PROCESSING
+            // ============================================
+            function processFlashMessages() {
+                const flashSuccess = $('meta[name="flash-success"]').attr('content');
+                const flashError = $('meta[name="flash-error"]').attr('content');
+                const flashWarning = $('meta[name="flash-warning"]').attr('content');
+                const flashInfo = $('meta[name="flash-info"]').attr('content');
+
+                if (flashSuccess && typeof showSuccess === 'function') {
+                showSuccess(flashSuccess);
+                }
+                if (flashError && typeof showError === 'function') {
+                showError(flashError);
+                }
+                if (flashWarning && typeof showWarning === 'function') {
+                showWarning(flashWarning);
+                }
+                if (flashInfo && typeof showInfo === 'function') {
+                showInfo(flashInfo);
+                }
+            }
+
+            // ============================================
+            // GLOBAL UTILITY FUNCTIONS
+            // ============================================
+
+            // Debug helper
+            window.debugSidebar = function () {
+                const deviceType = getDeviceType();
+                const $sidebar = $('.main-sidebar');
+                const $overlay = $('.sidebar-overlay');
+                const $body = $('body');
+
+                console.log('=== SIDEBAR DEBUG ===');
+                console.log('Device type:', deviceType);
+                console.log('Sidebar has sidebar-open:', $sidebar.hasClass('sidebar-open'));
+                console.log('Overlay has show:', $overlay.hasClass('show'));
+                console.log('Body has sidebar-open:', $body.hasClass('sidebar-open'));
+                console.log('Body has sidebar-collapse:', $body.hasClass('sidebar-collapse'));
+
+                // Debug menus
+                $('[id$="-menu"]').each(function () {
+                const menuId = $(this).attr('id');
+                const hasMenuOpen = $(this).hasClass('menu-open');
+                const $treeview = $(this).children('.nav-treeview');
+                const treeviewVisible = $treeview.is(':visible');
+
+                console.log(`Menu ${menuId}: menu-open=${hasMenuOpen}, treeview visible=${treeviewVisible}`);
+                });
+            };
+
+            // Force re-initialize (useful for debugging)
+            window.reinitializeSidebar = function () {
+                console.log('Reinitializing sidebar...');
+                initializeSidebar();
+            };
+
+            })();
 ]
 
-and you give me the strucure script and the other script is not complate ,
-  here is the script 2 that you need to continue from it ends:
+css code : 
 [
-                            #!/usr/bin/env python3
-                        """
-                        Script to fill Laravel Blade components with reusable code
-                        Run this after creating the structure with create_structure.py
-                        """
+                /*
+            |--------------------------------------------------------------------------
+            | Enhanced Admin Panel Design - Arabic RTL with Fixed Layout
+            |--------------------------------------------------------------------------
+            | Clean and minimal design system with proper content layout
+            */
 
-                        import os
+            /* ===== LOCAL FONT DEFINITIONS (TTF ONLY) ===== */
+            /*
+            * Define the local Tajawal font for regular weight (400)
+            */
+            @font-face {
+            font-family: 'Tajawal';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: local('Tajawal Regular'), local('Tajawal-Regular'),
+                url('/assets/Tajawal/Tajawal-Regular.ttf') format('truetype'); /* Only TTF */
+            }
 
-                        def create_file(path, content):
-                            """Create a file with the given content"""
-                            try:
-                                with open(path, 'w', encoding='utf-8') as f:
-                                    f.write(content)
-                                print(f"✓ Created: {path}")
-                            except Exception as e:
-                                print(f"❌ Error creating {path}: {str(e)}")
+            /*
+            * Define the local Tajawal font for bold weight (700)
+            */
+            @font-face {
+            font-family: 'Tajawal';
+            font-style: normal;
+            font-weight: 700;
+            font-display: swap;
+            src: local('Tajawal Bold'), local('Tajawal-Bold'),
+                url('/assets/Tajawal/Tajawal-Bold.ttf') format('truetype'); /* Only TTF */
+            }
 
-                        def fill_components():
-                            """Fill all component files with reusable code"""
-                            
-                            print("🔧 Filling components with reusable code...")
-                            print("=" * 50)
-                            
-                            # COMPONENTS - TABLES
-                            
-                            # Generic List Table
-                            create_file("partials/components/tables/generic-list-table.blade.php", '''{{-- Generic List Table Component --}}
-                        @props([
-                            'records',
-                            'columns' => [],
-                            'actions' => [],
-                            'tableId' => 'generic-table',
-                            'tableClass' => 'table table-striped table-bordered mb-0',
-                            'headerClass' => 'text-center bg-light',
-                            'bodyClass' => 'text-center',
-                            'noDataMessage' => 'لا توجد بيانات متاحة حالياً.',
-                            'noDataIcon' => 'fas fa-info-circle',
-                            'emptyColspan' => null,
-                            'showMobileCards' => true
-                        ])
 
-                        <div class="card card-info">
-                            @if(isset($title))
-                                <div class="card-header">
-                                    <h3 class="card-title">{{ $title }} (المجموع: {{ $records->total() }})</h3>
-                                </div>
-                            @endif
-                            
-                            <div id="{{ $tableId }}-container">
-                                <div class="card-body p-0">
-                                    {{-- Desktop Table --}}
-                                    <div class="d-none d-lg-block">
-                                        <div class="table-responsive">
-                                            <table class="{{ $tableClass }}" id="{{ $tableId }}">
-                                                <thead class="{{ $headerClass }}">
-                                                    <tr>
-                                                        @foreach($columns as $column)
-                                                            <th>{{ $column['label'] ?? $column }}</th>
-                                                        @endforeach
-                                                        @if(!empty($actions))
-                                                            <th>الإجراء</th>
-                                                        @endif
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="{{ $bodyClass }}">
-                                                    @forelse ($records as $record)
-                                                        <tr>
-                                                            @foreach($columns as $key => $column)
-                                                                <td>
-                                                                    @if(isset($column['component']))
-                                                                        @include($column['component'], ['record' => $record, 'value' => $record->{$column['field'] ?? $key}])
-                                                                    @elseif(isset($column['field']))
-                                                                        {{ $record->{$column['field']} }}
-                                                                    @else
-                                                                        {{ $record->{$key} }}
-                                                                    @endif
-                                                                </td>
-                                                            @endforeach
-                                                            
-                                                            @if(!empty($actions))
-                                                                <td>
-                                                                    @include('admin.partials.components.buttons.action-buttons', [
-                                                                        'record' => $record,
-                                                                        'actions' => $actions
-                                                                    ])
-                                                                </td>
-                                                            @endif
-                                                        </tr>
-                                                    @empty
-                                                        @include('admin.partials.widgets.no-data-widget', [
-                                                            'colspan' => $emptyColspan ?? (count($columns) + (!empty($actions) ? 1 : 0)),
-                                                            'icon' => $noDataIcon,
-                                                            'message' => $noDataMessage
-                                                        ])
-                                                    @endforelse
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+            /* ===== MAIN VARIABLES  ===== */
+            :root {
+            /* Colors - Change these to match your brand */
+            --primary-color: #3b82f6;
+            --secondary-color: #6b7280;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
 
-                                    {{-- Mobile Cards --}}
-                                    @if($showMobileCards)
-                                        @include('admin.partials.components.cards.mobile-record-card', [
-                                            'records' => $records,
-                                            'columns' => $columns,
-                                            'actions' => $actions,
-                                            'noDataIcon' => $noDataIcon,
-                                            'noDataMessage' => $noDataMessage
-                                        ])
-                                    @endif
+            /* Modern Gradients */
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --info-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --dark-gradient: linear-gradient(135deg, #434343 0%, #000000 100%);
 
-                                    {{-- Pagination --}}
-                                    @include('admin.partials.widgets.pagination-widget', ['records' => $records])
-                                </div>
-                            </div>
-                        </div>''')
+            /* Layout */
+            --sidebar-width: 340px;
+            --header-height: 60px;
 
-                            # Responsive Data Table
-                            create_file("partials/components/tables/responsive-data-table.blade.php", '''{{-- Responsive Data Table with Auto-Detection --}}
-                        @props([
-                            'records',
-                            'config' => [],
-                            'tableId' => 'responsive-table'
-                        ])
+            /* Spacing */
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
 
-                        @php
-                            // Auto-detect columns if not provided
-                            if (empty($config['columns']) && $records->count() > 0) {
-                                $firstRecord = $records->first();
-                                $config['columns'] = collect($firstRecord->getAttributes())->keys()->take(6)->mapWithKeys(function($key) {
-                                    return [$key => ['label' => ucfirst(str_replace('_', ' ', $key)), 'field' => $key]];
-                                })->toArray();
-                            }
-                        @endphp
+            /* Typography */
+            --font-family: "Tajawal", sans-serif;
+            --font-size-sm: 0.875rem;
+            --font-size-md: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.5rem;
 
-                        @include('admin.partials.components.tables.generic-list-table', [
-                            'records' => $records,
-                            'columns' => $config['columns'] ?? [],
-                            'actions' => $config['actions'] ?? [],
-                            'tableId' => $tableId,
-                            'title' => $config['title'] ?? null,
-                            'noDataMessage' => $config['noDataMessage'] ?? 'لا توجد بيانات متاحة حالياً.',
-                            'noDataIcon' => $config['noDataIcon'] ?? 'fas fa-info-circle'
-                        ])''')
+            /* Border & Shadow */
+            --border-radius: 0.75rem;
+            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --modern-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            }
 
-                            # Mobile Cards Table
-                            create_file("partials/components/cards/mobile-record-card.blade.php", '''{{-- Mobile Record Cards --}}
-                        @props([
-                            'records',
-                            'columns' => [],
-                            'actions' => [],
-                            'noDataMessage' => 'لا توجد بيانات متاحة حالياً.',
-                            'noDataIcon' => 'fas fa-info-circle',
-                            'cardClass' => 'card mb-3 mx-3'
-                        ])
+            /* ===== BASE STYLES ===== */
+            body {
+            font-family: var(--font-family);
+            font-size: var(--font-size-md);
+            font-weight: 700;
+            font-style: normal;
 
-                        <div class="d-lg-none">
-                            @forelse ($records as $record)
-                                <div class="{{ $cardClass }}">
-                                    <div class="card-body">
-                                        {{-- Card Header with Primary Info --}}
-                                        <div class="row mb-2">
-                                            @foreach(array_slice($columns, 0, 3) as $key => $column)
-                                                <div class="col-{{ 12 / min(3, count($columns)) }}">
-                                                    @if(isset($column['component']))
-                                                        @include($column['component'], ['record' => $record, 'value' => $record->{$column['field'] ?? $key}])
-                                                    @else
-                                                        <small class="text-muted">{{ $column['label'] ?? $key }}</small>
-                                                        <div class="font-weight-bold">
-                                                            {{ $record->{$column['field'] ?? $key} }}
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endforeach
-                                        </div>
+            direction: rtl;
+            text-align: right;
+            background-color: #f8fafc;
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+            }
 
-                                        {{-- Secondary Info --}}
-                                        @if(count($columns) > 3)
-                                            <div class="row mb-2">
-                                                @foreach(array_slice($columns, 3) as $key => $column)
-                                                    <div class="col-6">
-                                                        <small class="text-muted">{{ $column['label'] ?? $key }}:</small>
-                                                        @if(isset($column['component']))
-                                                            @include($column['component'], ['record' => $record, 'value' => $record->{$column['field'] ?? $key}])
-                                                        @else
-                                                            <span class="ml-1">{{ $record->{$column['field'] ?? $key} }}</span>
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @endif
+            /* ===== LAYOUT WITH SIDEBAR STATES ===== */
+            .main-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            z-index: 1030;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: transform 0.3s ease;
+            }
 
-                                        {{-- Actions --}}
-                                        @if(!empty($actions))
-                                            <div class="row mt-3">
-                                                <div class="col-12 text-center">
-                                                    @include('admin.partials.components.buttons.action-buttons', [
-                                                        'record' => $record,
-                                                        'actions' => $actions,
-                                                        'isMobile' => true
-                                                    ])
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            @empty
-                                @include('admin.partials.widgets.no-data-widget', [
-                                    'icon' => $noDataIcon,
-                                    'message' => $noDataMessage,
-                                    'wrapperClass' => 'text-center py-5'
-                                ])
-                            @endforelse
-                        </div>''')
+            .content-wrapper {
+            margin-right: var(--sidebar-width);
+            margin-left: 0;
+            margin-top: var(--header-height);
+            padding: var(--space-lg);
+            background-color: #f8fafc;
+            min-height: calc(100vh - var(--header-height));
+            transition: margin-right 0.3s ease;
+            width: auto;
+            }
 
-                            # COMPONENTS - FORMS
-                            
-                            # Generic Search Form
-                            create_file("partials/components/forms/generic-search-form.blade.php", '''{{-- Generic Search Form --}}
-                        @props([
-                            'fields' => [],
-                            'action' => '',
-                            'method' => 'get',
-                            'title' => 'البحث',
-                            'resetRoute' => null,
-                            'cardClass' => 'card card-info',
-                            'bodyClass' => 'card-body',
-                            'submitText' => 'بحث',
-                            'resetText' => 'إعادة تعيين'
-                        ])
+            /* ===== SIDEBAR TOGGLE STATES - DESKTOP ONLY ===== */
+            body.sidebar-collapse .main-sidebar {
+            transform: translateX(100%);
+            }
 
-                        <form action="{{ $action }}" method="{{ strtolower($method) }}">
-                            @if(strtolower($method) !== 'get')
-                                @csrf
-                            @endif
-                            
-                            <div class="{{ $cardClass }}">
-                                <div class="card-header">
-                                    <h3 class="card-title">{{ $title }}</h3>
-                                </div>
-                                <div class="{{ $bodyClass }}">
-                                    <div class="row">
-                                        @foreach($fields as $field)
-                                            @include('admin.partials.form-fields.' . ($field['type'] ?? 'text-input'), $field)
-                                        @endforeach
-                                        
-                                        {{-- Action Buttons --}}
-                                        <div class="col-lg-1 col-md-4 col-sm-6 col-4 d-flex align-items-center justify-content-center">
-                                            <div class="form-group w-100">
-                                                <button type="submit" class="btn btn-info btn-block mb-2">
-                                                    <i class="fas fa-search"></i> {{ $submitText }}
-                                                </button>
-                                                @if($resetRoute)
-                                                    <a href="{{ $resetRoute }}" class="btn btn-secondary btn-block">
-                                                        <i class="fas fa-redo"></i> {{ $resetText }}
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>''')
+            body.sidebar-collapse .content-wrapper {
+            margin-right: 0;
+            }
 
-                            # COMPONENTS - BADGES
-                            
-                            # Generic Badge
-                            create_file("partials/components/badges/generic-badge.blade.php", '''{{-- Generic Badge Component --}}
-                        @props([
-                            'value',
-                            'type' => 'info',
-                            'icon' => null,
-                            'mappings' => [],
-                            'class' => '',
-                            'size' => 'normal'
-                        ])
+            body.sidebar-collapse .main-footer {
+            margin-right: 0;
+            }
 
-                        @php
-                            $badgeClass = 'badge';
-                            $badgeText = $value;
-                            $badgeIcon = $icon;
-                            
-                            // Apply mappings if provided
-                            if (!empty($mappings) && isset($mappings[$value])) {
-                                $mapping = $mappings[$value];
-                                $type = $mapping['type'] ?? $type;
-                                $badgeText = $mapping['text'] ?? $badgeText;
-                                $badgeIcon = $mapping['icon'] ?? $badgeIcon;
-                            }
-                            
-                            // Size classes
-                            $sizeClass = match($size) {
-                                'sm' => 'badge-sm',
-                                'lg' => 'badge-lg px-3 py-2',
-                                default => 'px-3 py-2'
-                            };
-                            
-                            // Type classes
-                            $typeClass = match($type) {
-                                'success' => 'badge-success',
-                                'danger' => 'badge-danger',
-                                'warning' => 'badge-warning',
-                                'info' => 'badge-info',
-                                'primary' => 'badge-primary',
-                                'secondary' => 'badge-secondary',
-                                'light' => 'badge-light',
-                                'dark' => 'badge-dark',
-                                default => 'badge-info'
-                            };
-                            
-                            $finalClass = "{$badgeClass} {$typeClass} {$sizeClass} {$class}";
-                        @endphp
+            /* ===== FIXED HEADER STYLES ===== */
+            .main-header {
+            background: white !important;
+            border-bottom: 1px solid #e3f2fd;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1020;
+            height: var(--header-height);
+            width: 100%;
+            }
 
-                        <span class="{{ $finalClass }}">
-                            @if($badgeIcon)
-                                <i class="{{ $badgeIcon }} mr-1"></i>
-                            @endif
-                            {{ $badgeText }}
-                        </span>''')
+            .main-header .navbar {
+            padding: 0 1.5rem;
+            padding-right: calc(var(--sidebar-width) + 1.5rem);
+            min-height: var(--header-height);
+            background: transparent !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            flex-wrap: nowrap;
+            transition: padding-right 0.3s ease;
+            }
 
-                            # Status Badge
-                            create_file("partials/components/badges/status-badge.blade.php", '''{{-- Status Badge Component --}}
-                        @props([
-                            'status',
-                            'field' => 'status',
-                            'mappings' => null,
-                            'size' => 'normal'
-                        ])
+            /* ===== NAVBAR NAVIGATION ===== */
+            .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            list-style: none;
+            padding: 0;
+            }
 
-                        @php
-                            // Default status mappings
-                            $defaultMappings = [
-                                1 => ['type' => 'success', 'text' => 'نشط', 'icon' => 'fas fa-check-circle'],
-                                0 => ['type' => 'secondary', 'text' => 'غير نشط', 'icon' => 'fas fa-pause-circle'],
-                                2 => ['type' => 'danger', 'text' => 'محذوف', 'icon' => 'fas fa-times-circle'],
-                                'active' => ['type' => 'success', 'text' => 'نشط', 'icon' => 'fas fa-check-circle'],
-                                'inactive' => ['type' => 'secondary', 'text' => 'غير نشط', 'icon' => 'fas fa-pause-circle'],
-                                'deleted' => ['type' => 'danger', 'text' => 'محذوف', 'icon' => 'fas fa-times-circle'],
-                                'expired' => ['type' => 'warning', 'text' => 'منتهي الصلاحية', 'icon' => 'fas fa-clock']
-                            ];
-                            
-                            $statusMappings = $mappings ?? $defaultMappings;
-                            $statusValue = is_object($status) ? $status->{$field} : $status;
-                        @endphp
+            .navbar-nav .nav-item {
+            margin: 0;
+            position: relative;
+            }
 
-                        @include('admin.partials.components.badges.generic-badge', [
-                            'value' => $statusValue,
-                            'mappings' => $statusMappings,
-                            'size' => $size
-                        ])''')
+            .navbar-nav .nav-link {
+            color: #495057 !important;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            text-decoration: none;
+            border: none;
+            background: none;
+            }
 
-                            # COMPONENTS - BUTTONS
-                            
-                            # Action Buttons
-                            create_file("partials/components/buttons/action-buttons.blade.php", '''{{-- Action Buttons Component --}}
-                        @props([
-                            'record',
-                            'actions' => [],
-                            'isMobile' => false,
-                            'idField' => 'id',
-                            'statusField' => 'status'
-                        ])
+            .navbar-nav .nav-link:hover {
+            background: #f8f9fa;
+            color: var(--primary-color) !important;
+            transform: translateY(-1px);
+            }
 
-                        @php
-                            $recordId = $record->{$idField} ?? null;
-                            $recordStatus = $record->{$statusField} ?? null;
-                            $isDeleted = (int) $recordStatus === 2;
-                            
-                            // Default actions if none provided
-                            if (empty($actions)) {
-                                $actions = [
-                                    'edit' => [
-                                        'route' => 'edit',
-                                        'icon' => 'fas fa-edit',
-                                        'text' => 'تعديل',
-                                        'class' => 'btn-edit',
-                                        'color' => 'primary'
-                                    ],
-                                    'delete' => [
-                                        'action' => 'delete',
-                                        'icon' => $isDeleted ? 'fas fa-undo' : 'fas fa-trash',
-                                        'text' => $isDeleted ? 'استعادة' : 'حذف',
-                                        'class' => 'btnDelete ' . ($isDeleted ? 'btn-primary' : 'btn-delete'),
-                                        'color' => $isDeleted ? 'primary' : 'danger',
-                                        'data' => ['id' => $recordId, 'status' => $recordStatus]
-                                    ]
-                                ];
-                            }
-                        @endphp
+            .navbar-nav .nav-link i {
+            font-size: 1.1rem;
+            }
 
-                        @if($isMobile)
-                            {{-- Mobile Layout --}}
-                            @foreach($actions as $action)
-                                @if(isset($action['route']))
-                                    <a href="{{ $action['route'] }}" 
-                                    class="btn btn-{{ $action['color'] ?? 'primary' }} btn-sm mx-1" 
-                                    style="min-width: 70px;">
-                                        <i class="{{ $action['icon'] }}"></i> {{ $action['text'] }}
-                                    </a>
-                                @else
-                                    <a href="javascript:void(0)" 
-                                    class="btn btn-{{ $action['color'] ?? 'danger' }} btn-sm mx-1 {{ $action['class'] ?? '' }}"
-                                    @if(isset($action['data']))
-                                        @foreach($action['data'] as $key => $value)
-                                            data-{{ $key }}="{{ $value }}"
-                                        @endforeach
-                                    @endif
-                                    style="min-width: 70px;">
-                                        <i class="{{ $action['icon'] }}"></i> {{ $action['text'] }}
-                                    </a>
-                                @endif
-                            @endforeach
-                        @else
-                            {{-- Desktop Layout --}}
-                            <div class="action-buttons d-flex align-items-center">
-                                @foreach($actions as $action)
-                                    @if(isset($action['route']))
-                                        <a href="{{ $action['route'] }}" 
-                                        class="btn-action {{ $action['class'] ?? 'btn-edit' }}" 
-                                        title="{{ $action['text'] }}">
-                                            <i class="{{ $action['icon'] }}"></i>
-                                        </a>
-                                    @else
-                                        <a href="javascript:void(0)" 
-                                        class="btn-action {{ $action['class'] ?? 'btn-delete' }}"
-                                        @if(isset($action['data']))
-                                            @foreach($action['data'] as $key => $value)
-                                                data-{{ $key }}="{{ $value }}"
-                                            @endforeach
-                                        @endif
-                                        title="{{ $action['text'] }}">
-                                            <i class="{{ $action['icon'] }}"></i>
-                                        </a>
-                                    @endif
-                                @endforeach
-                            </div>
-                        @endif''')
+            /* ===== PUSHMENU BUTTON STYLES ===== */
+            .navbar-nav .nav-link[data-widget="pushmenu"] {
+            background: var(--primary-gradient) !important;
+            color: white !important;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.5rem;
+            transition: all 0.3s ease;
+            }
 
-                            # LAYOUTS
-                            
-                            # Page Wrapper
-                            create_file("partials/components/layouts/page-wrapper.blade.php", '''{{-- Page Wrapper Layout --}}
-                        @props([
-                            'title',
-                            'createRoute' => null,
-                            'createButtonText' => 'إضافة جديد',
-                            'breadcrumbs' => [],
-                            'showHeader' => true
-                        ])
+            .navbar-nav .nav-link[data-widget="pushmenu"]:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b5b95 100%) !important;
+            transform: translateY(-2px) scale(1.05);
+            color: white !important;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            }
 
-                        @if($showHeader)
-                            @include('admin.partials.components.layouts.header-section', [
-                                'title' => $title,
-                                'createRoute' => $createRoute,
-                                'createButtonText' => $createButtonText,
-                                'breadcrumbs' => $breadcrumbs
-                            ])
-                        @endif
+            .navbar-nav .nav-link[data-widget="pushmenu"] i {
+            font-size: 1rem;
+            }
 
-                        @include('admin.partials.components.layouts.content-section')''')
+            /* ===== RIGHT NAVBAR ===== */
+            .navbar-nav.ml-auto {
+            margin-right: auto !important;
+            margin-left: 0 !important;
+            justify-content: flex-end;
+            gap: 0.25rem;
+            }
 
-                            # Header Section
-                            create_file("partials/components/layouts/header-section.blade.php", '''{{-- Header Section --}}
-                        @props([
-                            'title',
-                            'createRoute' => null,
-                            'createButtonText' => 'إضافة جديد',
-                            'breadcrumbs' => []
-                        ])
+            /* ===== FOOTER STYLES ===== */
+            .main-footer {
+            background: white;
+            border-top: 1px solid #e3f2fd;
+            padding: 1rem 1.5rem;
+            margin-right: var(--sidebar-width);
+            margin-left: 0;
+            position: relative;
+            z-index: 1010;
+            color: #6c757d;
+            font-size: 0.9rem;
+            transition: margin-right 0.3s ease;
+            width: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            }
 
-                        <section class="content-header">
-                            <div class="container-fluid">
-                                {{-- Breadcrumbs --}}
-                                @if(!empty($breadcrumbs))
-                                    <div class="row mb-2">
-                                        <div class="col-sm-12">
-                                            <ol class="breadcrumb">
-                                                @foreach($breadcrumbs as $breadcrumb)
-                                                    @if($loop->last)
-                                                        <li class="breadcrumb-item active">{{ $breadcrumb['text'] }}</li>
-                                                    @else
-                                                        <li class="breadcrumb-item">
-                                                            <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['text'] }}</a>
-                                                        </li>
-                                                    @endif
-                                                @endforeach
-                                            </ol>
-                                        </div>
-                                    </div>
-                                @endif
-                                
-                                {{-- Title and Action Button --}}
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h1 class="m-0">{{ $title }}</h1>
-                                    @if($createRoute)
-                                        <a href="{{ $createRoute }}" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-plus"></i> {{ $createButtonText }}
-                                        </a>
-                                    @endif
-                                </div>
-                            </div>
-                        </section>''')
+            .main-footer .float-right {
+            float: none !important;
+            margin-left: auto;
+            margin-right: 0;
+            }
 
-                            # Content Section
-                            create_file("partials/components/layouts/content-section.blade.php", '''{{-- Content Section --}}
-                        <section class="content">
-                            <div class="container-fluid">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        {{ $slot }}
-                                    </div>
-                                </div>
-                            </div>
-                        </section>''')
+            .main-footer .float-left {
+            float: none !important;
+            margin-right: auto;
+            margin-left: 0;
+            }
 
-                            # FORM FIELDS (Enhanced)
-                            
-                            # Enhanced Text Input
-                            create_file("partials/form-fields/text-input.blade.php", '''{{-- Enhanced Text Input --}}
-                        @props([
-                            'name',
-                            'label',
-                            'value' => null,
-                            'placeholder' => '',
-                            'colClass' => 'col-12',
-                            'required' => false,
-                            'disabled' => false,
-                            'readonly' => false,
-                            'maxlength' => null,
-                            'pattern' => null,
-                            'help' => null,
-                            'icon' => null
-                        ])
+            .main-footer strong {
+            color: #495057;
+            }
 
-                        <div class="{{ $colClass }}">
-                            <div class="form-group">
-                                <label for="{{ $name }}">
-                                    {{ $label }}
-                                    @if($required)
-                                        <span class="text-danger">*</span>
-                                    @endif
-                                </label>
-                                
-                                @if($icon)
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="{{ $icon }}"></i></span>
-                                        </div>
-                                @endif
-                                
-                                <input type="text" 
-                                    id="{{ $name }}"
-                                    name="{{ $name }}" 
-                                    value="{{ $value ?? Request::get($name) }}"
-                                    class="form-control @error($name) is-invalid @enderror" 
-                                    placeholder="{{ $placeholder }}"
-                                    @if($required) required @endif
-                                    @if($disabled) disabled @endif
-                                    @if($readonly) readonly @endif
-                                    @if($maxlength) maxlength="{{ $maxlength }}" @endif
-                                    @if($pattern) pattern="{{ $pattern }}" @endif>
-                                
-                                @if($icon)
-                                    </div>
-                                @endif
-                                
-                                @if($help)
-                                    <small class="form-text text-muted">{{ $help }}</small>
-                                @endif
-                                
-                                @error($name)
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>''')
+            .main-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            }
 
-                            # Enhanced Select Input
-                            create_file("partials/form-fields/select-input.blade.php", '''{{-- Enhanced Select Input --}}
-                        @props([
-                            'name',
-                            'label',
-                            'options' => [],
-                            'value' => null,
-                            'colClass' => 'col-12',
-                            'required' => false,
-                            'disabled' => false,
-                            'multiple' => false,
-                            'help' => null,
-                            'placeholder' => null,
-                            'icon' => null
-                        ])
+            .main-footer a:hover {
+            color: #2563eb;
+            text-decoration: underline;
+            }
 
-                        <div class="{{ $colClass }}">
-                            <div class="form-group">
-                                <label for="{{ $name }}">
-                                    {{ $label }}
-                                    @if($required)
-                                        <span class="text-danger">*</span>
-                                    @endif
-                                </label>
-                                
-                                @if($icon)
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="{{ $icon }}"></i></span>
-                                        </div>
-                                @endif
-                                
-                                <select id="{{ $name }}"
-                                        name="{{ $name }}{{ $multiple ? '[]' : '' }}" 
-                                        class="form-control @error($name) is-invalid @enderror"
-                                        @if($required) required @endif
-                                        @if($disabled) disabled @endif
-                                        @if($multiple) multiple @endif>
-                                    
-                                    @if($placeholder && !$multiple)
-                                        <option value="">{{ $placeholder }}</option>
-                                    @endif
-                                    
-                                    @foreach($options as $optionValue => $optionText)
-                                        @if(is_array($optionText))
-                                            <optgroup label="{{ $optionValue }}">
-                                                @foreach($optionText as $subValue => $subText)
-                                                    <option value="{{ $subValue }}" 
-                                                            {{ (($value ?? Request::get($name)) == $subValue) ? 'selected' : '' }}>
-                                                        {{ $subText }}
-                                                    </option>
-                                                @endforeach
-                                            </optgroup>
-                                        @else
-                                            <option value="{{ $optionValue }}" 
-                                                    {{ (($value ?? Request::get($name)) == $optionValue) ? 'selected' : '' }}>
-                                                {{ $optionText }}
-                                            </option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                                
-                                @if($icon)
-                                    </div>
-                                @endif
-                                
-                                @if($help)
-                                    <small class="form-text text-muted">{{ $help }}</small>
-                                @endif
-                                
-                                @error($name)
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>''')
+            /* ===== CONTROL SIDEBAR ===== */
+            .control-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 250px;
+            z-index: 1031;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            }
 
-                            # Date Input
-                            create_file("partials/form-fields/date-input.blade.php", '''{{-- Date Input --}}
-                        @props([
-                            'name',
-                            'label',
-                            'value' => null,
-                            'colClass' => 'col-12',
-                            'required' => false,
-                            'disabled' => false,
-                            'min' => null,
-                            'max' => null,
-                            'help' => null
-                        ])
+            .control-sidebar.control-sidebar-open {
+            transform: translateX(0);
+            }
 
-                        <div class="{{ $colClass }}">
-                            <div class="form-group">
-                                <label for="{{ $name }}">
-                                    {{ $label }}
-                                    @if($required)
-                                        <span class="text-danger">*</span>
-                                    @endif
-                                </label>
-                                
-                                <input type="date" 
-                                    id="{{ $name }}"
-                                    name="{{ $name }}" 
-                                    value="{{ $value ?? Request::get($name) }}"
-                                    class="form-control @error($name) is-invalid @enderror"
-                                    @if($required) required @endif
-                                    @if($disabled) disabled @endif
-                                    @if($min) min="{{ $min }}" @endif
-                                    @if($max) max="{{ $
+            /* ===== SIDEBAR COMPONENTS ===== */
+            .brand-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-lg);
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            }
+
+            .brand-link:hover {
+            color: white;
+            text-decoration: none;
+            }
+
+            .brand-image {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: var(--space-sm);
+            }
+
+            .brand-text {
+            font-size: var(--font-size-lg);
+            font-weight: 700;
+            }
+
+            .user-panel {
+            display: flex;
+            align-items: center;
+            padding: var(--space-md);
+            background: rgba(255, 255, 255, 0.05);
+            margin: var(--space-sm) var(--space-md);
+            border-radius: var(--border-radius);
+            }
+
+            .user-panel .image {
+            margin-left: var(--space-sm);
+            }
+
+            .user-panel img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            }
+
+            .user-panel .info a {
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            }
+
+            .user-panel .info small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: var(--font-size-sm);
+            }
+
+            /* ===== SEARCH ===== */
+            .sidebar-search {
+            padding: 0 var(--space-md);
+            margin: var(--space-md) 0;
+            }
+
+            .sidebar-search .form-control-sidebar {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 25px !important;
+            color: white !important;
+            padding: var(--space-sm) var(--space-md);
+            }
+
+            .sidebar-search .form-control-sidebar::placeholder {
+            color: rgba(255, 255, 255, 0.6) !important;
+            }
+
+            .sidebar-search .btn-sidebar {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 0 25px 25px 0;
+            color: white;
+            }
+
+            /* ===== NAVIGATION ===== */
+            .nav-header {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6) !important;
+            padding: var(--space-md) var(--space-md) var(--space-sm);
+            margin-top: var(--space-md);
+            }
+
+            .nav-link {
+            display: flex;
+            align-items: center;
+            padding: var(--space-sm) var(--space-md);
+            margin: 2px var(--space-sm);
+            border-radius: var(--border-radius);
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            }
+
+            .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            text-decoration: none;
+            transform: translateX(-3px);
+            }
+
+            .nav-link.active {
+            background: var(--primary-color) !important;
+            color: white !important;
+            box-shadow: var(--box-shadow);
+            }
+
+            .nav-icon {
+            width: 20px;
+            margin-left: var(--space-sm);
+            text-align: center;
+            }
+
+            .nav-treeview .nav-link {
+            padding-right: calc(var(--space-md) + var(--space-lg));
+            font-size: var(--font-size-sm);
+            }
+
+            .menu-open>.nav-link {
+            background: rgba(255, 255, 255, 0.1) !important;
+            }
+
+            /* ===== MODERN DASHBOARD HEADER ===== */
+            .dashboard-header {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+
+            .dashboard-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .dashboard-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+            }
+
+            /* ===== MODERN STATS CARDS ===== */
+            .stats-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--modern-shadow);
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            }
+
+            .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: 4px;
+            background: var(--card-gradient, var(--primary-gradient));
+            }
+
+            .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+            }
+
+            .stats-card.primary::before {
+            background: var(--primary-gradient);
+            }
+
+            .stats-card.success::before {
+            background: var(--success-gradient);
+            }
+
+            .stats-card.warning::before {
+            background: var(--warning-gradient);
+            }
+
+            .stats-card.danger::before {
+            background: var(--danger-gradient);
+            }
+
+            .stats-card.info::before {
+            background: var(--info-gradient);
+            }
+
+            .stats-card.dark::before {
+            background: var(--dark-gradient);
+            }
+
+            .stats-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1rem;
+            position: relative;
+            }
+
+            .stats-icon.primary {
+            background: var(--primary-gradient);
+            }
+
+            .stats-icon.success {
+            background: var(--success-gradient);
+            }
+
+            .stats-icon.warning {
+            background: var(--warning-gradient);
+            }
+
+            .stats-icon.danger {
+            background: var(--danger-gradient);
+            }
+
+            .stats-icon.info {
+            background: var(--info-gradient);
+            }
+
+            .stats-icon.dark {
+            background: var(--dark-gradient);
+            }
+
+            .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0.5rem 0;
+            line-height: 1;
+            }
+
+            .stats-label {
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-weight: 500;
+            margin: 0;
+            }
+
+            /* ===== MODERN CHART CARDS ===== */
+            .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--modern-shadow);
+            border: none;
+            margin-bottom: 2rem;
+            }
+
+            .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f8f9fa;
+            }
+
+            .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+            }
+
+            .year-selector {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            min-width: 120px;
+            }
+
+            .year-selector:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+            outline: none;
+            }
+
+            .chart-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            }
+
+            .chart-summary-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+            }
+
+            .chart-summary-label {
+            font-size: 1.1rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+            }
+
+            .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            }
+
+            .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+            }
+
+            .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            }
+
+            /* ===== MODERN TABLE STYLES ===== */
+            .orders-table-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--modern-shadow);
+            border: none;
+            }
+
+            .orders-table-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.5rem 2rem;
+            margin: 0;
+            }
+
+            .orders-table-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            }
+
+            .table-modern {
+            margin: 0;
+            background: white;
+            }
+
+            .table-modern thead th {
+            background: #f8f9fa;
+            border: none;
+            padding: 1.25rem;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            }
+
+            .table-modern tbody td {
+            padding: 1.25rem;
+            border-color: #f1f3f4;
+            vertical-align: middle;
+            font-weight: 500;
+            }
+
+            .table-modern tbody tr:hover {
+            background: #f8f9fa;
+            }
+
+            .order-id {
+            font-weight: 700;
+            color: #495057;
+            }
+
+            .order-number {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            }
+
+            .order-amount {
+            font-weight: 700;
+            color: #28a745;
+            font-size: 1.1rem;
+            }
+
+            .btn-view {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            }
+
+            .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+            }
+
+            /* ===== ENHANCED CARDS ===== */
+            .card {
+            background: white;
+            border: none;
+            border-radius: 20px;
+            box-shadow: var(--modern-shadow);
+            margin-bottom: var(--space-lg);
+            overflow: hidden;
+            }
+
+            .card-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: var(--space-lg);
+            font-weight: 600;
+            border-bottom: none;
+            }
+
+            .card-body {
+            padding: var(--space-lg);
+            }
+
+            /* ===== ENHANCED BUTTONS ===== */
+
+            .btn {
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: 50px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            }
+
+            .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow);
+            text-decoration: none;
+            }
+
+            .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            }
+
+            .btn-primary:hover {
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            color: white;
+            }
+
+            .btn-success {
+            background: var(--success-gradient);
+            color: white;
+            }
+
+            .btn-warning {
+            background: var(--warning-gradient);
+            color: white;
+            }
+
+            .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+            }
+
+            .btn-info {
+            background: var(--primary-gradient);
+            color: white;
+            }
+
+            .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+            }
+
+            .btn-sm {
+            padding: 6px var(--space-md);
+            font-size: var(--font-size-sm);
+            }
+
+            /* ===== FORMS ===== */
+            .form-control {
+            padding: var(--space-sm) var(--space-md);
+            border: 2px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            transition: border-color 0.3s ease;
+            }
+
+            .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+            }
+
+            .form-group {
+            margin-bottom: var(--space-lg);
+            }
+
+            .form-label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: var(--space-sm);
+            display: block;
+            }
+
+            /* ===== TABLES ===== */
+            .table {
+            width: 100%;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--modern-shadow);
+            }
+
+            .table th {
+            background: #f9fafb;
+            padding: var(--space-md);
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            }
+
+            .table td {
+            padding: var(--space-md);
+            border-bottom: 1px solid #f3f4f6;
+            }
+
+            .table tbody tr:hover {
+            background: #f9fafb;
+            }
+
+            /* ===== ALERTS ===== */
+            .alert {
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            }
+
+            .alert-primary {
+            background: #dbeafe;
+            color: #1e40af;
+            border-right: 4px solid var(--primary-color);
+            }
+
+            .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-right: 4px solid var(--success-color);
+            }
+
+            .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-right: 4px solid var(--warning-color);
+            }
+
+            .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border-right: 4px solid var(--danger-color);
+            }
+
+            .alert-info {
+            background: #cffafe;
+            color: #155e75;
+            border-right: 4px solid var(--info-color);
+            }
+
+            /* ===== BADGES ===== */
+            .badge {
+            padding: 4px var(--space-sm);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            }
+
+            .badge-primary {
+            background: var(--primary-color);
+            color: white;
+            }
+
+            .badge-success {
+            background: var(--success-color);
+            color: white;
+            }
+
+            .badge-warning {
+            background: var(--warning-color);
+            color: white;
+            }
+
+            .badge-danger {
+            background: var(--danger-color);
+            color: white;
+            }
+
+            .badge-info {
+            background: var(--info-color);
+            color: white;
+            }
+
+            .badge-secondary {
+            background: var(--secondary-color);
+            color: white;
+            }
+
+            .badge.right {
+            margin-left: var(--space-sm);
+            margin-right: auto;
+            }
+
+            /* ===== ENHANCED BREADCRUMBS ===== */
+            .breadcrumb,
+            .breadcrumb-modern {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            }
+
+            .breadcrumb-item {
+            color: #6b7280;
+            font-weight: 500;
+            }
+
+            .breadcrumb-item+.breadcrumb-item::before {
+            content: "←";
+            margin-left: var(--space-sm);
+            color: #9ca3af;
+            }
+
+            .breadcrumb-item.active {
+            color: #374151;
+            font-weight: 600;
+            }
+
+            .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            }
+
+            .breadcrumb-item a:hover {
+            color: #2563eb;
+            text-decoration: underline;
+            }
+
+            /* ===== DROPDOWN STYLES ===== */
+            .dropdown-menu {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+            min-width: 200px;
+            direction: rtl;
+            text-align: right;
+            }
+
+            .dropdown-menu-right {
+            right: 0 !important;
+            left: auto !important;
+            }
+
+            .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            color: #495057;
+            font-weight: 500;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            }
+
+            .dropdown-item:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+            color: var(--primary-color);
+            transform: translateX(-3px);
+            }
+
+            .dropdown-item.text-danger:hover {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: var(--danger-color);
+            }
+
+            .dropdown-item i {
+            width: 16px;
+            text-align: center;
+            }
+
+            .dropdown-divider {
+            margin: 0.25rem 1rem;
+            border-color: #f1f3f4;
+            }
+
+            /* ===== NOTIFICATIONS DROPDOWN ===== */
+            .dropdown-menu-lg {
+            min-width: 300px;
+            max-width: 400px;
+            }
+
+            .dropdown-item.dropdown-header {
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: 600;
+            margin: -0.5rem 0 0.5rem 0;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+            }
+
+            .dropdown-item.dropdown-footer {
+            background: #f8f9fa;
+            font-weight: 600;
+            text-align: center;
+            margin: 0.5rem 0 -0.5rem 0;
+            border-radius: 0 0 15px 15px;
+            color: var(--primary-color);
+            }
+
+            .dropdown-item.dropdown-footer:hover {
+            background: var(--primary-color);
+            color: white;
+            }
+
+            /* ===== NOTIFICATION ITEM STYLES ===== */
+            .notification-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f1f3f4;
+            }
+
+            .notification-item:last-of-type {
+            border-bottom: none;
+            }
+
+            .notification-item .media-body {
+            flex: 1;
+            }
+
+            .notification-item .dropdown-item-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 0.25rem 0;
+            line-height: 1.3;
+            }
+
+            .notification-item .text-sm {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin: 0;
+            }
+
+            .notification-item:hover {
+            background: #f8f9fa;
+            }
+
+            /* ===== BADGE STYLES ===== */
+            .navbar-badge {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--danger-color) !important;
+            color: white;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+            }
+
+            /* ===== USER NAME DISPLAY ===== */
+            .user-name {
+            font-weight: 600;
+            color: #2c3e50;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            }
+
+            /* ===== DATE INPUT STYLES ===== */
+            .form-control[type="date"] {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath d='M8 0a.5.5 0 0 1 .5.5V1h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h4V.5A.5.5 0 0 1 8 0zM7 1v1h2V1H7zM3 3v1h10V3H3z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px;
+            padding-right: 2.5rem;
+            padding-left: 1rem;
+            }
+
+            /* ===== CONTAINER FLUID ===== */
+            .container-fluid {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            }
+
+            /* ===== UTILITIES ===== */
+            .rtl-number {
+            direction: ltr;
+            display: inline-block;
+            }
+
+            .text-center {
+            text-align: center;
+            }
+
+            .text-left {
+            text-align: left;
+            }
+
+            .text-right {
+            text-align: right;
+            }
+
+            .mt-1 {
+            margin-top: var(--space-sm);
+            }
+
+            .mt-2 {
+            margin-top: var(--space-md);
+            }
+
+            .mt-3 {
+            margin-top: var(--space-lg);
+            }
+
+            .mt-4 {
+            margin-top: var(--space-xl);
+            }
+
+            .mb-1 {
+            margin-bottom: var(--space-sm);
+            }
+
+            .mb-2 {
+            margin-bottom: var(--space-md);
+            }
+
+            .mb-3 {
+            margin-bottom: var(--space-lg);
+            }
+
+            .mb-4 {
+            margin-bottom: var(--space-xl);
+            }
+
+            .p-1 {
+            padding: var(--space-sm);
+            }
+
+            .p-2 {
+            padding: var(--space-md);
+            }
+
+            .p-3 {
+            padding: var(--space-lg);
+            }
+
+            .p-4 {
+            padding: var(--space-xl);
+            }
+
+            /* ===== RESPONSIVE DESIGN ===== */
+            @media (max-width: 991.98px) {
+
+            /* Mobile: Sidebar hidden by default */
+            .main-sidebar {
+                transform: translateX(100%) !important;
+            }
+
+            .main-sidebar.sidebar-open {
+                transform: translateX(0) !important;
+            }
+
+            .content-wrapper {
+                margin-right: 0 !important;
+                margin-left: 0 !important;
+            }
+
+            .main-header .navbar {
+                padding-right: 1.5rem !important;
+                padding-left: 1.5rem !important;
+            }
+
+            .main-footer {
+                margin-right: 0 !important;
+                margin-left: 0 !important;
+            }
+            }
+
+            /* ===== DESKTOP LAYOUT (>= 992px) ===== */
+            @media (min-width: 992px) {
+
+            /* Ensure sidebar is always visible on desktop by default */
+            .main-sidebar {
+                transform: translateX(0) !important;
+            }
+
+            /* Ensure content wrapper has proper margin by default */
+            .content-wrapper {
+                margin-right: var(--sidebar-width) !important;
+                margin-left: 0 !important;
+            }
+
+            /* Ensure header navbar has proper padding by default */
+            .main-header .navbar {
+                padding-right: calc(var(--sidebar-width) + 1.5rem) !important;
+                padding-left: 1.5rem !important;
+            }
+
+            /* Ensure footer has proper positioning by default */
+            .main-footer {
+                margin-right: var(--sidebar-width) !important;
+                margin-left: 0 !important;
+            }
+
+            /* Allow toggle functionality to override defaults */
+            body.sidebar-collapse .main-sidebar {
+                transform: translateX(100%) !important;
+            }
+
+            body.sidebar-collapse .content-wrapper {
+                margin-right: 0 !important;
+                margin-left: 0 !important;
+            }
+
+            body.sidebar-collapse .main-header .navbar {
+                padding-right: 1.5rem !important;
+                padding-left: 1.5rem !important;
+            }
+
+            body.sidebar-collapse .main-footer {
+                margin-right: 0 !important;
+                margin-left: 0 !important;
+            }
+
+            /* Prevent navbar wrapping */
+            .navbar-nav {
+                flex-wrap: nowrap !important;
+            }
+
+            .navbar-nav .nav-link {
+                white-space: nowrap;
+            }
+
+            /* Ensure proper spacing */
+            .main-header .navbar {
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            /* Footer proper layout on desktop */
+            .main-footer {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: nowrap;
+            }
+            }
+
+            @media (max-width: 767.98px) {
+            .content-wrapper {
+                padding: var(--space-md);
+            }
+
+            .card-body {
+                padding: var(--space-md);
+            }
+
+            .brand-link {
+                padding: var(--space-md);
+            }
+
+            .nav-link {
+                font-size: var(--font-size-sm);
+            }
+
+            .dashboard-header {
+                padding: 1.5rem;
+                text-align: center;
+            }
+
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .chart-legend {
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .stats-number {
+                font-size: 2rem;
+            }
+
+            .main-header .navbar {
+                padding: 0 1rem;
+            }
+
+            .navbar-nav {
+                gap: 0.25rem;
+            }
+
+            .navbar-nav .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .user-name {
+                max-width: 100px;
+            }
+
+            .dropdown-menu {
+                min-width: 180px;
+            }
+
+            .dropdown-menu-lg {
+                min-width: 200px;
+                max-width: 250px;
+            }
+
+            .notification-item {
+                padding: 0.75rem 1rem;
+            }
+
+            .notification-item .dropdown-item-title {
+                font-size: 0.85rem;
+            }
+            }
+
+            @media (max-width: 576px) {
+            .main-header .navbar {
+                padding: 0 0.75rem;
+            }
+
+            .dropdown-menu {
+                position: fixed !important;
+                top: var(--header-height) !important;
+                right: 0.75rem !important;
+                left: 0.75rem !important;
+                width: auto !important;
+                min-width: auto !important;
+                max-width: none !important;
+            }
+
+            .navbar-nav .nav-link[data-widget="pushmenu"] {
+                width: 35px;
+                height: 35px;
+                margin-left: 0.25rem;
+            }
+            }
+
+            /* ===== ANIMATIONS ===== */
+            .fade-in {
+            animation: fadeIn 0.5s ease-out;
+            }
+
+            @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            }
+
+
+
+
+
+
+            /* ===== ENHANCED SIDEBAR STYLING ===== */
+            .main-sidebar {
+            background: linear-gradient(180deg, #343a40 0%, #2c3237 100%);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            }
+
+            /* ===== BRAND LINK ===== */
+            .brand-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            }
+
+            .brand-link:hover {
+            color: white;
+            text-decoration: none;
+            background: rgba(0, 0, 0, 0.3);
+            }
+
+            .brand-image {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: var(--space-sm);
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .brand-text {
+            font-size: var(--font-size-lg);
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+
+            /* ===== SIDEBAR SEARCH ===== */
+            .sidebar-search {
+            padding: 0 var(--space-md);
+            margin: var(--space-md) 0;
+            }
+
+            .sidebar-search .form-control-sidebar {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            border-radius: 20px !important;
+            padding: var(--space-sm) var(--space-md);
+            transition: all 0.3s ease;
+            }
+
+            .sidebar-search .form-control-sidebar:focus {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            }
+
+            .sidebar-search .form-control-sidebar::placeholder {
+            color: rgba(255, 255, 255, 0.6) !important;
+            }
+
+            .sidebar-search .btn-sidebar {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 0 20px 20px 0 !important;
+            color: white;
+            transition: all 0.3s ease;
+            }
+
+            .sidebar-search .btn-sidebar:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+            }
+
+            /* ===== NAVIGATION HEADERS ===== */
+            .nav-header {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.6) !important;
+            padding: 0.75rem 1rem 0.5rem;
+            margin-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            }
+
+            .nav-header i {
+            font-size: 12px;
+            opacity: 0.8;
+            }
+
+            /* ===== NAVIGATION LINKS ===== */
+            .sidebar .nav-link {
+            border-radius: 8px !important;
+            margin: 2px 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+            text-decoration: none;
+            white-space: nowrap;
+            min-height: 44px;
+            }
+
+            .sidebar .nav-link p {
+            margin: 0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.4;
+            }
+
+            .sidebar .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: white !important;
+            text-decoration: none;
+            }
+
+            .sidebar .nav-link.active {
+            background: var(--primary-gradient) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transform: translateX(-3px);
+            }
+
+            .sidebar .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #17a2b8;
+            border-radius: 0 2px 2px 0;
+            }
+
+            /* ===== NAVIGATION ICONS ===== */
+            .nav-icon {
+            width: 20px;
+            margin-left: var(--space-sm);
+            text-align: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            }
+
+            /* ===== ENHANCED TREEVIEW FUNCTIONALITY ===== */
+
+            /* Base treeview item styling */
+            .nav-item.has-treeview {
+            position: relative;
+            }
+
+            /* Treeview parent link styling */
+            .nav-item.has-treeview>.nav-link {
+            cursor: pointer;
+            user-select: none;
+            }
+
+            /* Arrow icon styling */
+            .nav-link .right {
+            transition: transform 0.3s ease;
+            margin-left: auto;
+            margin-right: 0;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+            }
+
+            /* Arrow rotation states */
+            .nav-item.has-treeview>.nav-link .right.fa-angle-left {
+            transform: rotate(0deg);
+            }
+
+            .nav-item.has-treeview>.nav-link .right.fa-angle-down {
+            transform: rotate(0deg);
+            }
+
+            /* Treeview menu container */
+            .nav-treeview {
+            display: none;
+            padding-left: 0;
+            margin: 0;
+            list-style: none;
+            background: transparent !important;
+            border-radius: 0 0 8px 8px;
+            margin-top: 2px;
+            overflow: hidden;
+            }
+
+            /* Show treeview when menu is open */
+            .nav-item.menu-open>.nav-treeview {
+            display: block !important;
+            }
+
+            /* Treeview item styling */
+            .nav-treeview .nav-item {
+            margin: 0;
+            background-color: var(--dark-gradient) !important;
+            }
+
+            .nav-treeview .nav-link {
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 1px 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            min-height: 36px;
+            font-weight: 400;
+            }
+
+            .nav-treeview .nav-link:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            transform: translateX(-2px);
+            }
+
+            .nav-treeview .nav-link.active {
+            background: rgba(59, 130, 246, 0.4) !important;
+            color: #bfdbfe !important;
+            font-weight: 500;
+            }
+
+            .nav-treeview .nav-icon {
+            width: 16px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            text-align: center;
+            }
+
+            /* Parent menu states */
+            .nav-item.has-treeview>.nav-link.active {
+            background: rgba(255, 255, 255, 0.1) !important;
+            }
+
+            .nav-item.has-treeview.menu-open>.nav-link {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            }
+
+            /* Menu opening animation states */
+            .nav-item.menu-is-opening>.nav-treeview {
+            display: block !important;
+            }
+
+            /* Smooth transitions for all states */
+            .nav-item,
+            .nav-link,
+            .nav-treeview {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* Ensure proper z-index for dropdowns */
+            .nav-item.has-treeview {
+            position: relative;
+            z-index: 1;
+            }
+
+            .nav-treeview {
+            position: relative;
+            z-index: 2;
+            }
+
+            /* Hover effects for better UX */
+            .nav-item.has-treeview>.nav-link:hover .right {
+            color: white;
+            }
+
+            /* Active parent highlighting */
+            .nav-item.has-treeview.menu-open>.nav-link,
+            .nav-item.has-treeview>.nav-link.active {
+            box-shadow: inset 3px 0 0 var(--primary-color);
+            }
+
+
+            /* ===== MENU STATES ===== */
+            .menu-open>.nav-link {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            }
+
+            .menu-open>.nav-link .right {
+            transform: rotate(-90deg);
+            transition: transform 0.3s ease;
+            }
+
+            .nav-link .right {
+            transition: transform 0.3s ease;
+            margin-left: auto;
+            margin-right: 0;
+            margin-inline-start: auto;
+            margin-inline-end: 0;
+            flex-shrink: 0;
+            }
+
+            /* ===== EMPTY NOTIFICATIONS STYLING ===== */
+            .empty-notifications {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #6c757d;
+            }
+
+            .empty-notifications i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+            }
+
+            .empty-notifications p {
+            margin: 0;
+            font-size: 0.9rem;
+            }
+
+            /* ===== SPECIAL LOGOUT LINK ===== */
+            .nav-link.bg-gradient-danger {
+            background: var(--danger-gradient) !important;
+            color: white !important;
+            margin: 1rem 8px 0.5rem;
+            font-weight: 600;
+            border-radius: 12px !important;
+            }
+
+            .nav-link.bg-gradient-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+            transform: translateX(-3px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            }
+
+            /* ===== ICON COLORS FOR VISUAL HIERARCHY ===== */
+            .text-cyan {
+            color: #17a2b8 !important;
+            }
+
+            .text-teal {
+            color: #20c997 !important;
+            }
+
+            .text-indigo {
+            color: #6610f2 !important;
+            }
+
+            .text-purple {
+            color: #6f42c1 !important;
+            }
+
+            .text-orange {
+            color: #fd7e14 !important;
+            }
+
+            /* ===== SMOOTH ANIMATIONS ===== */
+            .nav-item {
+            transition: all 0.2s ease;
+            }
+
+            /* ===== CUSTOM SCROLLBAR ===== */
+            .sidebar::-webkit-scrollbar {
+            width: 6px;
+            }
+
+            .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            transition: background 0.3s ease;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+            }
+
+            /* ===== USER PANEL (if you add it back) ===== */
+            .user-panel {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 0 0.5rem var(--space-md);
+            transition: all 0.3s ease;
+            }
+
+            .user-panel:hover {
+            background: rgba(255, 255, 255, 0.08);
+            }
+
+            .user-panel .image {
+            margin-left: var(--space-sm);
+            }
+
+            .user-panel img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .user-panel .info a {
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            }
+
+            .user-panel .info small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: var(--font-size-sm);
+            }
+
+
+
+
+
+
+            /* ===== MODERN PAGINATION STYLES ===== */
+
+            /* Pagination Container */
+            .pagination-wrapper {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: var(--space-md) !important;
+            background: white !important;
+            border-radius: var(--border-radius) !important;
+            box-shadow: var(--modern-shadow) !important;
+            margin-top: var(--space-lg) !important;
+            direction: rtl !important;
+            text-align: center !important;
+            }
+
+            /* Pagination List */
+            .pagination {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.25rem !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            list-style: none !important;
+            direction: ltr !important;
+            /* Reverse for proper RTL display */
+            }
+
+            /* Pagination Items */
+            .pagination .page-item {
+            margin: 0;
+            }
+
+            /* Pagination Links */
+            .pagination .page-link {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 40px !important;
+            height: 40px !important;
+            padding: 0.5rem 0.75rem !important;
+            color: #6b7280 !important;
+            background: white !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            font-weight: 500 !important;
+            font-size: 0.9rem !important;
+            text-decoration: none !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            }
+
+            /* Pagination Link Hover Effects */
+            .pagination .page-link:hover {
+            color: white !important;
+            background: var(--primary-gradient) !important;
+            border-color: var(--primary-color) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+            z-index: 2 !important;
+            }
+
+            /* Active Page Styling */
+            .pagination .page-item.active .page-link {
+            color: white !important;
+            background: var(--primary-gradient) !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+            z-index: 1 !important;
+            }
+
+            /* Disabled Page Styling */
+            .pagination .page-item.disabled .page-link {
+            color: #d1d5db;
+            background: #f9fafb;
+            border-color: #f3f4f6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            }
+
+            .pagination .page-item.disabled .page-link:hover {
+            color: #d1d5db;
+            background: #f9fafb;
+            border-color: #f3f4f6;
+            transform: none;
+            box-shadow: none;
+            }
+
+            /* Previous/Next Button Styling */
+            .pagination .page-item:first-child .page-link,
+            .pagination .page-item:last-child .page-link {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-color: #dee2e6;
+            }
+
+            .pagination .page-item:first-child .page-link:hover,
+            .pagination .page-item:last-child .page-link:hover {
+            background: var(--primary-gradient);
+            border-color: var(--primary-color);
+            color: white;
+            }
+
+            /* Ellipsis Styling */
+            .pagination .page-item .page-link[aria-label="..."] {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: default;
+            font-weight: 600;
+            }
+
+            .pagination .page-item .page-link[aria-label="..."]:hover {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            transform: none;
+            box-shadow: none;
+            }
+
+            /* Pagination Info Text */
+            .pagination-info {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-left: 1rem;
+            padding: 0.5rem 0;
+            white-space: nowrap;
+            }
+
+            .pagination-info strong {
+            color: var(--primary-color);
+            font-weight: 600;
+            }
+
+            /* Responsive Pagination */
+            @media (max-width: 767.98px) {
+            .pagination-wrapper {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .pagination {
+                gap: 0.125rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .pagination .page-link {
+                min-width: 36px;
+                height: 36px;
+                padding: 0.375rem 0.5rem;
+                font-size: 0.8rem;
+            }
+
+            .pagination .page-item:first-child .page-link,
+            .pagination .page-item:last-child .page-link {
+                padding: 0.375rem 0.75rem;
+            }
+
+            .pagination-info {
+                margin-left: 0;
+                text-align: center;
+                order: -1;
+            }
+            }
+
+            @media (max-width: 575.98px) {
+            .pagination {
+                gap: 0.0625rem;
+            }
+
+            .pagination .page-link {
+                min-width: 32px;
+                height: 32px;
+                padding: 0.25rem 0.375rem;
+                font-size: 0.75rem;
+            }
+
+            .pagination .page-item:first-child .page-link,
+            .pagination .page-item:last-child .page-link {
+                padding: 0.25rem 0.5rem;
+            }
+            }
+
+            /* Enhanced Pagination Variants */
+            .pagination-sm .page-link {
+            min-width: 32px;
+            height: 32px;
+            padding: 0.375rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            }
+
+            .pagination-lg .page-link {
+            min-width: 48px;
+            height: 48px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border-radius: 10px;
+            }
+
+            /* Compact Pagination Style */
+            .pagination-compact {
+            gap: 0;
+            }
+
+            .pagination-compact .page-link {
+            border-radius: 0;
+            border-left-width: 0;
+            }
+
+            .pagination-compact .page-item:first-child .page-link {
+            border-radius: 8px 0 0 8px;
+            border-left-width: 1px;
+            }
+
+            .pagination-compact .page-item:last-child .page-link {
+            border-radius: 0 8px 8px 0;
+            }
+
+            .pagination-compact .page-item.active .page-link {
+            z-index: 3;
+            border-left-width: 1px;
+            }
+
+            /* Pagination with Results Info */
+            .pagination-with-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md);
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--modern-shadow);
+            margin-top: var(--space-lg);
+            }
+
+            .pagination-with-info .pagination-info {
+            margin: 0;
+            }
+
+            /* Dark Theme Pagination (if needed) */
+            .pagination-dark {
+            background: #1f2937;
+            }
+
+            .pagination-dark .page-link {
+            color: #d1d5db;
+            background: #374151;
+            border-color: #4b5563;
+            }
+
+            .pagination-dark .page-link:hover {
+            background: var(--primary-gradient);
+            border-color: var(--primary-color);
+            color: white;
+            }
+
+            .pagination-dark .page-item.active .page-link {
+            background: var(--primary-gradient);
+            border-color: var(--primary-color);
+            }
+
+            .pagination-dark .page-item.disabled .page-link {
+            color: #6b7280;
+            background: #2d3748;
+            border-color: #374151;
+            }
+
+            /* Accessibility Enhancements */
+            .pagination .page-link:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            z-index: 4;
+            }
+
+            .pagination .page-item.active .page-link:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.3);
+            }
+
+            /* Animation for Page Transitions */
+            @keyframes pageChange {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            }
+
+            .pagination .page-link.loading {
+            animation: pageChange 0.3s ease-out;
+            }
+
+            /* RTL Specific Adjustments */
+            [dir="rtl"] .pagination {
+            direction: rtl;
+            }
+
+            [dir="rtl"] .pagination-info {
+            margin-right: 1rem;
+            margin-left: 0;
+            }
+
+            [dir="rtl"] .pagination-compact .page-link {
+            border-right-width: 0;
+            border-left-width: 1px;
+            }
+
+            [dir="rtl"] .pagination-compact .page-item:first-child .page-link {
+            border-radius: 0 8px 8px 0;
+            border-right-width: 1px;
+            border-left-width: 0;
+            }
+
+            [dir="rtl"] .pagination-compact .page-item:last-child .page-link {
+            border-radius: 8px 0 0 8px;
+            border-left-width: 1px;
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            /* Modern Notification System */
+            .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            width: 400px;
+            max-width: calc(100vw - 40px);
+            }
+
+            .notification {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-right: 5px solid;
+            position: relative;
+            overflow: hidden;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+
+            .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+            }
+
+            .notification.hide {
+            transform: translateX(400px);
+            opacity: 0;
+            margin-bottom: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            max-height: 0;
+            }
+
+            /* Notification Types */
+            .notification.success {
+            border-right-color: #48bb78;
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            }
+
+            .notification.error {
+            border-right-color: #f56565;
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            }
+
+            .notification.warning {
+            border-right-color: #ed8936;
+            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+            }
+
+            .notification.info {
+            border-right-color: #4299e1;
+            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+            }
+
+            .notification.primary {
+            border-right-color: #667eea;
+            background: linear-gradient(135deg, #faf5ff 0%, #e9d8fd 100%);
+            }
+
+            /* Notification Content */
+            .notification-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            }
+
+            .notification-icon {
+            width: 24px;
+            height: 24px;
+            margin-left: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            }
+
+            .notification.success .notification-icon {
+            background: #48bb78;
+            }
+
+            .notification.error .notification-icon {
+            background: #f56565;
+            }
+
+            .notification.warning .notification-icon {
+            background: #ed8936;
+            }
+
+            .notification.info .notification-icon {
+            background: #4299e1;
+            }
+
+            .notification.primary .notification-icon {
+            background: #667eea;
+            }
+
+            .notification-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #2d3748;
+            flex: 1;
+            }
+
+            .notification-close {
+            background: none;
+            border: none;
+            color: #a0aec0;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            }
+
+            .notification-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #2d3748;
+            }
+
+            .notification-message {
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-right: 36px;
+            }
+
+            .notification-progress {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            transition: width linear;
+            border-radius: 0 0 16px 0;
+            }
+
+            .notification.success .notification-progress {
+            background: #48bb78;
+            }
+
+            .notification.error .notification-progress {
+            background: #f56565;
+            }
+
+            .notification.warning .notification-progress {
+            background: #ed8936;
+            }
+
+            .notification.info .notification-progress {
+            background: #4299e1;
+            }
+
+            .notification.primary .notification-progress {
+            background: #667eea;
+            }
+
+            /* Mobile Responsive */
+            @media (max-width: 768px) {
+            .notification-container {
+                width: calc(100vw - 20px);
+                right: 10px;
+                top: 10px;
+            }
+
+            .notification {
+                padding: 16px;
+            }
+
+            .notification-title {
+                font-size: 15px;
+            }
+
+            .notification-message {
+                font-size: 13px;
+                margin-right: 32px;
+            }
+            }
 ]
-
-
-
-Summary of Goals:
-Create a highly reusable Laravel admin component system that:
-
-Eliminates repetitive code across different admin pages
-Uses smart, configurable partials in resources/views/admin/partials/
-Automatically generates file structures and fills them with code
-Works for any data model with minimal configuration
-
-What I'll Build:
-1. Universal Data List Component
-
-Smart table that adapts to any model/data structure
-Configurable columns, filters, and actions
-Automatic mobile-responsive cards
-Built-in pagination and search
-
-2. Intelligent Form Builder
-
-Auto-generates search forms based on field configuration
-Dynamic field types (text, number, select, date, etc.)
-Smart validation and styling
-
-3. Generic Action System
-
-Universal CRUD operations (edit, delete, restore)
-Status management with visual badges
-Configurable button sets
-
-4. Python Automation Scripts
-
-Script 1: Creates folder structure and files
-Script 2: Fills files with appropriate code based on your model
-
-Key Features:
-
-One config file defines everything for a new admin page
-Zero code duplication - everything reuses core components
-Smart defaults with full customization options
-Mobile-first responsive design
-RTL/Arabic support built-in
-

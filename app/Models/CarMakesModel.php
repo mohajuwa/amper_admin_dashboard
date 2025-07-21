@@ -101,7 +101,11 @@ public $timestamps = false;
         return $query->orderBy('car_makes.popularity', 'desc')
             ->paginate(15);
     }
-
+// Add this to your CarModelsModel class
+public function carMake()
+{
+    return $this->belongsTo(CarMakesModel::class, 'make_id', 'make_id');
+}
     public static function getAllCarMakes()
     {
         return self::select('car_makes.*')

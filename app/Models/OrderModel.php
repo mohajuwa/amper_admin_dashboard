@@ -33,6 +33,7 @@ class OrderModel extends Model
         'vehicle_id',
         'fault_type_id',
         'order_status',
+        'is_scheduled',
         'order_type',
         'orders_coupon_id',
         'orders_paymentmethod',
@@ -46,6 +47,114 @@ class OrderModel extends Model
     ];
 
     // === RELATIONSHIPS ===
+
+    public function scheduling()
+    {
+        // An order has one scheduling record, linked by the 'order_id' column.
+        return $this->hasOne(OrderScheduling::class, 'order_id', 'order_id');
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(OrderOffer::class, 'order_id', 'order_id');
+    }
+
+    public function activityLog()
+    {
+        // Order by latest first
+        return $this->hasMany(OrderActivityLog::class, 'order_id', 'order_id')->latest();
+    }
+
+    public function negotiations()
+    {
+        return $this->hasMany(OrderNegotiation::class, 'order_id', 'order_id')->orderBy('negotiation_round');
+    }
+
+    public function customerResponses()
+    {
+        return $this->hasMany(CustomerResponse::class, 'order_id', 'order_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(VendorModel::class, 'vendor_id', 'vendor_id');
+    }
+
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(VehicleModel::class, 'vehicle_id');
+    }
+
+    public function faultType(): BelongsTo
+    {
+        return $this->belongsTo(FaultTypeModel::class, 'fault_type_id');
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(CouponModel::class, 'orders_coupon_id');
+    }
+
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(AddressModel::class, 'orders_address');
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethodModel::class, 'orders_paymentmethod');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItemModel::class, 'order_id', 'order_id');
+    }
+
+    public function websiteInfo(): HasOne
+    {
+        return $this->hasOne(WebsiteInfoOrder::class, 'order_id', 'order_id');
+    }
+
+    // === HELPERS / ACCESSORS ===
+
+    /**
+     * Decodes a JSON field and retrieves a value for a specific language.
+     * Provides several fallbacks to prevent errors.
+     *
+     * @param string $fieldName The name of the database column (e.g., 'vendor_name').
+     * @param string $lang The desired language code (e.g., 'ar', 'en').
+     * @return string|null The localized value, the original value, or null.
+     */
+    public function getLocalizedValue(string $fieldName, string $lang): ?string
+    {
+        // Get the raw value from the model's attributes
+        $value = $this->attributes[$fieldName] ?? null;
+
+        if (is_null($value)) {
+            return null; // Return null if the attribute doesn't exist
+        }
+
+        // Attempt to decode the value as JSON
+        $decodedValue = json_decode($value, true);
+
+        // Check if JSON is valid and is an array
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedValue)) {
+            // Return the value for the requested language, or the first available language as a fallback
+            return $decodedValue[$lang] ?? reset($decodedValue) ?: null;
+        }
+
+        // If it's not valid JSON, it might be a plain string. Return it directly.
+        return (string) $value;
+    }
+
+
+    // === STATIC METHODS ===
 
     public static function getRecord()
     {
@@ -175,7 +284,7 @@ class OrderModel extends Model
             });
         }
 
-        // Manual pagination for filtered results   
+        // Manual pagination for filtered results      
         $page = Request::get('page', 1);
         $perPage = 20;
         $total = $results->count();
@@ -192,55 +301,6 @@ class OrderModel extends Model
             ]
         );
     }
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function vendor(): BelongsTo
-    {
-        return $this->belongsTo(VendorModel::class, 'vendor_id', 'vendor_id');
-    }
-
-
-    public function vehicle(): BelongsTo
-    {
-        return $this->belongsTo(VehicleModel::class, 'vehicle_id');
-    }
-
-    public function faultType(): BelongsTo
-    {
-        return $this->belongsTo(FaultTypeModel::class, 'fault_type_id');
-    }
-
-    public function coupon(): BelongsTo
-    {
-        return $this->belongsTo(CouponModel::class, 'orders_coupon_id');
-    }
-
-    public function address(): BelongsTo
-    {
-        return $this->belongsTo(AddressModel::class, 'orders_address');
-    }
-
-    public function paymentMethod(): BelongsTo
-    {
-        return $this->belongsTo(PaymentMethodModel::class, 'orders_paymentmethod');
-    }
-
-    // Example: If order has items
-    public function items(): HasMany
-    {
-        return $this->hasMany(OrderItemModel::class, 'order_id', 'order_id');
-    }
-
-    // If order has website info
-    public function websiteInfo(): HasOne
-    {
-        return $this->hasOne(WebsiteInfoOrder::class, 'order_id', 'order_id');
-    }
-
-    // === STATIC METHODS ===
 
     public static function getSingle($id)
     {
@@ -288,7 +348,6 @@ class OrderModel extends Model
             ->count();
     }
 
-    // In OrderModel
     public static function getTotalAmountMonth($start_date, $end_date)
     {
         return self::where('payment_status', 'paid')

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PartnerModel;
+use App\Models\VendorModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -12,7 +12,7 @@ class PartnerController extends Controller
     public function list()
     {
         $data['header_title'] = 'Partner';
-        $data['getRecord'] = PartnerModel::getRecord();
+        $data['getRecord'] = VendorModel::getRecord();
 
         return view('admin.partner.list', $data);
     }
@@ -25,7 +25,7 @@ class PartnerController extends Controller
     {
 
 
-        $partner = new PartnerModel;
+        $partner = new VendorModel;
 
         $partner->button_name = trim($request->button_name);
         $partner->button_link = trim($request->button_link);
@@ -54,14 +54,14 @@ class PartnerController extends Controller
     }
     public function edit($id)
     {
-        $data['getRecord'] = PartnerModel::getSingle($id);
+        $data['getRecord'] = VendorModel::getSingle($id);
         $data['header_title'] = 'Edit Partner';
         return view('admin.partner.edit', $data);
     }
     public function update(Request $request, $id)
     {
 
-        $partner = PartnerModel::getSingle($id);
+        $partner = VendorModel::getSingle($id);
 
         $partner->button_name = trim($request->button_name);
         $partner->button_link = trim($request->button_link);
@@ -86,7 +86,7 @@ class PartnerController extends Controller
     }
     public function delete($id)
     {
-        $partner = PartnerModel::getSingle($id);
+        $partner = VendorModel::getSingle($id);
         $partner->is_delete = 1;
         $partner->save();
 

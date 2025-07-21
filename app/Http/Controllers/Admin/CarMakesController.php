@@ -107,7 +107,33 @@ class CarMakesController extends Controller
             ], 500);
         }
     }
+    public function restore(Request $request, $id)
+    {
+        try {
+            $discount_code = CarMakesModel::getSingle($id);
 
+            if (!$discount_code) {
+                return response()->json([
+                    'success' => false,
+                    'message' => ' العنصر غير موجود'
+                ], 404);
+            }
+
+            $discount_code->update(['status' => self::STATUS_ACTIVE]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم استعادة  العنصر بنجاح',
+                'redirect' => route('admin.car_make.list')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('carMakesModel deletion error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء استعادة  العنصر'
+            ], 500);
+        }
+    }
     private function validateCarMakesData(Request $request)
     {
         return $request->validate([
@@ -154,10 +180,10 @@ class CarMakesController extends Controller
     {
         // Create slug from English name
         $slug = Str::slug($englishName, '-');
-        
+
         // Get file extension
         $extension = $file->getClientOriginalExtension();
-        
+
         // Generate filename: slug + timestamp + extension
         $fileName = $slug . '_' . time() . '.' . $extension;
 

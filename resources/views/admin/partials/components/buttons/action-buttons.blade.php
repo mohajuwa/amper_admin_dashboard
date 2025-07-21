@@ -1,3 +1,4 @@
+php
 {{-- Action Buttons Component --}}
 @props([
     'record',
@@ -16,7 +17,7 @@
     if (empty($actions)) {
         $actions = [
             'edit' => [
-                'route' => 'edit',
+                'route' => route('admin.car_make.edit', $recordId),
                 'icon' => 'fas fa-edit',
                 'text' => 'تعديل',
                 'class' => 'btn-edit',
@@ -32,11 +33,37 @@
             ]
         ];
     }
+    
+    // Process actions to resolve any closures
+    $processedActions = [];
+    foreach ($actions as $key => $action) {
+        $processedAction = $action;
+        
+        // Resolve route if it's a closure
+        if (isset($action['route']) && is_callable($action['route'])) {
+            $processedAction['route'] = $action['route']($record);
+        }
+        
+        // Process data attributes
+        if (isset($action['data']) && is_array($action['data'])) {
+            $processedData = [];
+            foreach ($action['data'] as $dataKey => $dataValue) {
+                if (is_callable($dataValue)) {
+                    $processedData[$dataKey] = $dataValue($record);
+                } else {
+                    $processedData[$dataKey] = $dataValue;
+                }
+            }
+            $processedAction['data'] = $processedData;
+        }
+        
+        $processedActions[$key] = $processedAction;
+    }
 @endphp
 
 @if($isMobile)
     {{-- Mobile Layout --}}
-    @foreach($actions as $action)
+    @foreach($processedActions as $action)
         @if(isset($action['route']))
             <a href="{{ $action['route'] }}" 
                class="btn btn-{{ $action['color'] ?? 'primary' }} btn-sm mx-1" 
@@ -46,9 +73,9 @@
         @else
             <a href="javascript:void(0)" 
                class="btn btn-{{ $action['color'] ?? 'danger' }} btn-sm mx-1 {{ $action['class'] ?? '' }}"
-               @if(isset($action['data']))
+               @if(isset($action['data']) && is_array($action['data']))
                    @foreach($action['data'] as $key => $value)
-                       data-{{ $key }}="{{ $value }}"
+                       data-{{ $key }}="{{ is_scalar($value) ? $value : '' }}"
                    @endforeach
                @endif
                style="min-width: 70px;">
@@ -59,7 +86,7 @@
 @else
     {{-- Desktop Layout --}}
     <div class="action-buttons d-flex align-items-center">
-        @foreach($actions as $action)
+        @foreach($processedActions as $action)
             @if(isset($action['route']))
                 <a href="{{ $action['route'] }}" 
                    class="btn-action {{ $action['class'] ?? 'btn-edit' }}" 
@@ -69,9 +96,9 @@
             @else
                 <a href="javascript:void(0)" 
                    class="btn-action {{ $action['class'] ?? 'btn-delete' }}"
-                   @if(isset($action['data']))
+                   @if(isset($action['data']) && is_array($action['data']))
                        @foreach($action['data'] as $key => $value)
-                           data-{{ $key }}="{{ $value }}"
+                           data-{{ $key }}="{{ is_scalar($value) ? $value : '' }}"
                        @endforeach
                    @endif
                    title="{{ $action['text'] }}">

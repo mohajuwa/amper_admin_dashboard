@@ -91,39 +91,30 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($getRecord as $value)
-                                        @php
-                                            $title = is_array($value->notification_title)
-                                                ? $value->notification_title['ar'] ??
-                                                    ($value->notification_title['en'] ?? 'غير متوفر')
-                                                : json_decode($value->notification_title, true)['ar'] ?? 'غير متوفر';
-
-                                            $body = is_array($value->notification_body)
-                                                ? $value->notification_body['ar'] ??
-                                                    ($value->notification_body['en'] ?? 'غير متوفر')
-                                                : json_decode($value->notification_body, true)['ar'] ?? 'غير متوفر';
-                                        @endphp
                                         <tr
                                             style="{{ empty($value->notification_read) ? 'background-color: #f8f9fa;' : '' }}">
                                             <td>{{ $value->notification_id }}</td>
                                             <td>
+                                                {{-- Just call the clean_title accessor! --}}
                                                 <div
                                                     class="font-weight-{{ empty($value->notification_read) ? 'bold' : 'normal' }}">
-                                                    {{ $title }}
+                                                    {{ $value->clean_title }}
                                                 </div>
                                             </td>
                                             <td>
+                                                {{-- And call the clean_body accessor! --}}
                                                 <div class="text-truncate" style="max-width: 300px;"
-                                                    title="{{ $body }}">
-                                                    {{ $body }}
+                                                    title="{{ $value->clean_body }}">
+                                                    {{ $value->clean_body }}
                                                 </div>
                                             </td>
                                             <td>
                                                 <div class="text-sm">
                                                     <div class="font-weight-bold">
-                                                        {{ \Carbon\Carbon::parse($value->notification_datetime)->locale('ar')->translatedFormat('j F Y') }}
+                                                        {{ $value->notification_datetime->translatedFormat('j F Y') }}
                                                     </div>
                                                     <div class="text-muted">
-                                                        {{ \Carbon\Carbon::parse($value->notification_datetime)->format('g:i A') }}
+                                                        {{ $value->notification_datetime->format('g:i A') }}
                                                     </div>
                                                 </div>
                                             </td>
@@ -135,17 +126,25 @@
                                                 @endif
                                             </td>
                                             <td>
+                                                {{-- Use the new accessors in the data attributes for cleaner code --}}
+                                                @php
+                                                    $buttonDate = $value->notification_datetime->translatedFormat(
+                                                        'j F Y g:i A',
+                                                    );
+                                                @endphp
                                                 @if (empty($value->notification_read))
                                                     <button class="btn btn-sm btn-success mark-read"
                                                         data-id="{{ $value->notification_id }}"
-                                                        data-title="{{ $title }}" data-body="{{ $body }}"
-                                                        data-date="{{ \Carbon\Carbon::parse($value->notification_datetime)->locale('ar')->translatedFormat('j F Y g:i A') }}">
+                                                        data-title="{{ $value->clean_title }}"
+                                                        data-body="{{ $value->clean_body }}"
+                                                        data-date="{{ $buttonDate }}">
                                                         <i class="fas fa-check"></i> تحديد كمقروء
                                                     </button>
                                                 @else
                                                     <button class="btn btn-sm btn-info view-details"
-                                                        data-title="{{ $title }}" data-body="{{ $body }}"
-                                                        data-date="{{ \Carbon\Carbon::parse($value->notification_datetime)->locale('ar')->translatedFormat('j F Y g:i A') }}">
+                                                        data-title="{{ $value->clean_title }}"
+                                                        data-body="{{ $value->clean_body }}"
+                                                        data-date="{{ $buttonDate }}">
                                                         <i class="fas fa-eye"></i> عرض
                                                     </button>
                                                 @endif
@@ -209,7 +208,6 @@
             </div>
         </div>
     </div>
-
 @endsection
 @section('script')
     <script type="text/javascript">

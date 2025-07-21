@@ -78,6 +78,13 @@
                         </p>
                     </a>
                 </li>
+                 <li class="nav-item">
+                    <a href="{{ route('admin.vendor.list') }}"
+                        class="nav-link {{ Str::contains($routeName, 'admin.vendor') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-handshake text-success"></i>
+                        <p class="font-weight-medium">{{ __(' الشركاء') }}</p>
+                    </a>
+                </li>
 
                 <li class="nav-item">
                     <a href="{{ route('admin.customer.list') }}"
@@ -212,13 +219,7 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.partner.list') }}"
-                        class="nav-link {{ Str::contains($routeName, 'admin.partner') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-handshake text-success"></i>
-                        <p class="font-weight-medium">{{ __('شعارات الشركاء') }}</p>
-                    </a>
-                </li>
+               
 
                 <!-- الرسائل والإشعارات -->
                 <li class="nav-header mt-3">

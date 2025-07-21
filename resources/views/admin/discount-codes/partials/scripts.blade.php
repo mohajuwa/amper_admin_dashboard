@@ -12,7 +12,7 @@
             confirmMessage: 'هل أنت متأكد من الحذف؟',
             confirmRestoreMessage: 'هل أنت متأكد من الاستعادة؟',
             confirmTitle: 'تأكيد العملية',
-            loadingText: '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...',
+            loadingText: '<i class="fas fa-spinner fa-spin"></i>...',
             defaultButtonText: '<i class="fas fa-trash"></i>',
             successMessage: 'تمت العملية بنجاح',
             errorPrefix: 'حدث خطأ: ',

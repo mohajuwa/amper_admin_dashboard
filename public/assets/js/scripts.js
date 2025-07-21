@@ -287,9 +287,9 @@
 
     // Auto-hide alerts after 5 seconds
     setTimeout(function () {
-      $('.alert').fadeOut('slow');
+      // This correctly ignores the permanent alerts and only hides the temporary ones.
+      $('.alert:not(.alert-permanent)').fadeOut('slow');
     }, 5000);
-
     // CSRF token for AJAX requests
     $.ajaxSetup({
       headers: {

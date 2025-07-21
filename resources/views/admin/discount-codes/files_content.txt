@@ -1,0 +1,2159 @@
+محتويات الملفات في المجلد: C:\xampp\htdocs\amper_admin\resources\views\admin\discount-codes
+================================================================================
+
+📄 add.blade.php
+──────────────────────────────────────────────────
+@extends('admin.layouts.app')
+
+@section('content')
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">{{ $header_title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">الرئيسية</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.discount-codes.list') }}">أكواد الخصم</a></li>
+                        <li class="breadcrumb-item active">إضافة كود خصم جديد</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-plus mr-2"></i>
+                                إضافة كود خصم جديد
+                            </h3>
+                            <div class="card-tools">
+                                <a href="{{ route('admin.discount-codes.list') }}" class="btn btn-tool" title="العودة للقائمة">
+                                    <i class="fas fa-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Form -->
+                        <form id="addDiscountCodeForm" action="{{ route('admin.discount-codes.store') }}"
+                            method="POST">
+                            @csrf
+
+                            <div class="card-body">
+                                <!-- Coupon Name -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="coupon_name" class="required">
+                                                <i class="fas fa-ticket-alt mr-1"></i>
+                                                اسم كود الخصم
+                                            </label>
+                                            <input type="text"
+                                                class="form-control @error('coupon_name') is-invalid @enderror"
+                                                id="coupon_name" name="coupon_name"
+                                                value="{{ old('coupon_name') }}"
+                                                placeholder="أدخل اسم كود الخصم">
+                                            @error('coupon_name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Count and Discount Row -->
+                                <div class="row">
+                                    <!-- Usage Count -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_count" class="required">
+                                                <i class="fas fa-hashtag mr-1"></i>
+                                                عدد مرات الاستخدام
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_count') is-invalid @enderror"
+                                                id="coupon_count" name="coupon_count"
+                                                value="{{ old('coupon_count') }}"
+                                                placeholder="أدخل عدد مرات الاستخدام" min="1">
+                                            @error('coupon_count')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Discount Percentage -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_discount" class="required">
+                                                <i class="fas fa-percent mr-1"></i>
+                                                نسبة الخصم
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_discount') is-invalid @enderror"
+                                                id="coupon_discount" name="coupon_discount"
+                                                value="{{ old('coupon_discount') }}"
+                                                placeholder="أدخل نسبة الخصم" min="0" max="100" step="0.01">
+                                            @error('coupon_discount')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Expire Date and Status Row -->
+                                <div class="row">
+                                    <!-- Expire Date -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_expiredate" class="required">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                تاريخ انتهاء الصلاحية
+                                            </label>
+                                            <input type="date"
+                                                class="form-control @error('coupon_expiredate') is-invalid @enderror"
+                                                id="coupon_expiredate" name="coupon_expiredate"
+                                                value="{{ old('coupon_expiredate') }}">
+                                            @error('coupon_expiredate')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Status -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="status" class="required">
+                                                <i class="fas fa-toggle-on mr-1"></i>
+                                                حالة كود الخصم
+                                            </label>
+                                            <select class="form-control @error('status') is-invalid @enderror"
+                                                id="status" name="status">
+                                                <option value="">اختر الحالة</option>
+                                                <option value="1" {{ old('status') == '1' ? 'selected' : '' }}>
+                                                    نشط</option>
+                                                <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>
+                                                    غير نشط</option>
+                                                <option value="2" {{ old('status') == '2' ? 'selected' : '' }}>
+                                                    محذوف</option>
+                                            </select>
+                                            @error('status')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer with Action Buttons -->
+                            <div class="card-footer">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                            <i class="fas fa-plus mr-2"></i>
+                                            <span class="btn-text">إضافة كود الخصم</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <a href="{{ route('admin.discount-codes.list') }}"
+                                            class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-arrow-left mr-2"></i>
+                                            العودة للقائمة
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        $(document).ready(function() {
+            function redirectToList(message, type) {
+                window.FlashHandler.redirectWithFlash(message, type, "{{ route('admin.discount-codes.list') }}");
+            }
+
+            // Clear validation styles
+            $('body').on('input change', '#coupon_name, #coupon_count, #coupon_discount, #coupon_expiredate, #status', function() {
+                $(this).removeClass('is-invalid');
+                $(this).siblings('.invalid-feedback').remove();
+            });
+
+            // Status border color
+            $('body').on('change', '#status', function() {
+                $(this).removeClass('border-success border-warning border-danger');
+                if (this.value === '1') $(this).addClass('border-success');
+                else if (this.value === '0') $(this).addClass('border-warning');
+                else if (this.value === '2') $(this).addClass('border-danger');
+            });
+
+            $('body').on('keypress', 'input:not([type="submit"])', function(e) {
+                if (e.which === 13) e.preventDefault();
+            });
+
+            // Keyboard shortcuts
+            $(document).on('keydown', function(e) {
+                if (e.ctrlKey && e.which === 83) {
+                    e.preventDefault();
+                    $('#addDiscountCodeForm').submit();
+                }
+                if (e.which === 27) {
+                    window.location.href = "{{ route('admin.discount-codes.list') }}";
+                }
+            });
+
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            $('#coupon_expiredate').attr('min', today);
+
+            // Discount formatting
+            $('body').on('blur', '#coupon_discount', function() {
+                let value = $(this).val();
+                if (value && !isNaN(value)) {
+                    $(this).val(parseFloat(value).toFixed(2));
+                }
+            });
+        });
+    </script>
+@endsection
+
+@section('scripts')
+    <script type="text/javascript">
+        $('body').on('submit', '#addDiscountCodeForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $submitBtn = $('#submitBtn');
+            const $btnText = $submitBtn.find('.btn-text');
+
+            $submitBtn.prop('disabled', true);
+            $btnText.html('جاري الإضافة...');
+            $submitBtn.find('i').removeClass('fa-plus').addClass('fa-spinner fa-spin');
+
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        redirectToList(response.message, 'success');
+                    } else {
+                        window.showNotification('error', response.message);
+                        resetSubmitButton($submitBtn, $btnText);
+                    }
+                },
+                error: function(xhr) {
+                    let message = 'حدث خطأ أثناء إضافة كود الخصم';
+                    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                        displayErrors(xhr.responseJSON.errors);
+                        message = 'يرجى تصحيح الأخطاء المذكورة';
+                    } else if (xhr.responseJSON?.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    window.showNotification('error', message);
+                    resetSubmitButton($submitBtn, $btnText);
+                }
+            });
+        });
+
+        function resetSubmitButton($btn, $text) {
+            $btn.prop('disabled', false);
+            $text.html('إضافة كود الخصم');
+            $btn.find('i').removeClass('fa-spinner fa-spin').addClass('fa-plus');
+        }
+
+        function displayErrors(errors) {
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+            for (const field in errors) {
+                const $field = $(`#${field}`);
+                if ($field.length) {
+                    $field.addClass('is-invalid');
+                    $field.after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
+                }
+            }
+        }
+    </script>
+@endsection
+──────────────────────────────────────────────────
+
+📄 edit.blade.php
+──────────────────────────────────────────────────
+@extends('admin.layouts.app')
+
+@section('content')
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">{{ $header_title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">الرئيسية</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.discount-codes.list') }}">أكواد الخصم</a></li>
+                        <li class="breadcrumb-item active">تعديل كود الخصم</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <!-- Coupon Information Cards -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                معلومات كود الخصم
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Days Remaining -->
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-info">
+                                            <i class="fas fa-clock"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">باقي على انتهاء الكود</span>
+                                            <span class="info-box-number">
+                                                @php
+                                                    $expireDate = \Carbon\Carbon::parse($getRecord->coupon_expiredate);
+                                                    $now = \Carbon\Carbon::now();
+                                                    $daysRemaining = $now->diffInDays($expireDate, false);
+
+                                                    if ($daysRemaining > 0) {
+                                                        echo $daysRemaining . ' يوم';
+                                                    } elseif ($daysRemaining == 0) {
+                                                        echo 'ينتهي اليوم';
+                                                    } else {
+                                                        echo 'منتهي الصلاحية';
+                                                    }
+                                                @endphp
+                                            </span>
+                                            <div class="progress">
+                                                @php
+                                                    $totalDays = \Carbon\Carbon::parse(
+                                                        $getRecord->created_at,
+                                                    )->diffInDays($expireDate);
+                                                    $progressPercentage =
+                                                        $totalDays > 0
+                                                            ? max(0, min(100, ($daysRemaining / $totalDays) * 100))
+                                                            : 0;
+                                                    $progressColor =
+                                                        $daysRemaining > 7
+                                                            ? 'bg-success'
+                                                            : ($daysRemaining > 3
+                                                                ? 'bg-warning'
+                                                                : 'bg-danger');
+                                                @endphp
+                                                <div class="progress-bar {{ $progressColor }}"
+                                                    style="width: {{ $progressPercentage }}%"></div>
+                                            </div>
+                                            <span class="progress-description">
+                                                {{ $expireDate->format('Y-m-d') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Usage Count -->
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-success">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">تم استخدامه</span>
+                                            <span class="info-box-number">
+                                                @php
+                                                    // Assuming you have a used_count field or relationship
+                                                    // Replace this with your actual usage count logic
+                                                    $usedCount = $getRecord->used_count ?? 0; // or count from orders table
+                                                    $totalCount = $getRecord->coupon_count;
+                                                    $remainingCount = $totalCount - $usedCount;
+                                                @endphp
+                                                {{ $usedCount }} مرة
+                                            </span>
+                                            <div class="progress">
+                                                @php
+                                                    $usagePercentage =
+                                                        $totalCount > 0 ? ($usedCount / $totalCount) * 100 : 0;
+                                                    $usageColor =
+                                                        $usagePercentage < 50
+                                                            ? 'bg-success'
+                                                            : ($usagePercentage < 80
+                                                                ? 'bg-warning'
+                                                                : 'bg-danger');
+                                                @endphp
+                                                <div class="progress-bar {{ $usageColor }}"
+                                                    style="width: {{ $usagePercentage }}%"></div>
+                                            </div>
+                                            <span class="progress-description">
+                                                متبقي {{ $remainingCount }} من {{ $totalCount }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Days Since Creation -->
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-warning">
+                                            <i class="fas fa-calendar-plus"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">مر على إطلاقه</span>
+                                            <span class="info-box-number">
+                                                @php
+                                                    $createdDate = \Carbon\Carbon::parse($getRecord->created_at);
+                                                    $daysSinceCreation = $createdDate->diffInDays($now);
+
+                                                    if ($daysSinceCreation == 0) {
+                                                        echo 'اليوم';
+                                                    } elseif ($daysSinceCreation == 1) {
+                                                        echo 'يوم واحد';
+                                                    } elseif ($daysSinceCreation == 2) {
+                                                        echo 'يومان';
+                                                    } elseif ($daysSinceCreation < 11) {
+                                                        echo $daysSinceCreation . ' أيام';
+                                                    } else {
+                                                        echo $daysSinceCreation . ' يوم';
+                                                    }
+                                                @endphp
+                                            </span>
+                                            <div class="progress">
+                                                @php
+                                                    $totalLifeDays = $createdDate->diffInDays($expireDate);
+                                                    $lifePercentage =
+                                                        $totalLifeDays > 0
+                                                            ? ($daysSinceCreation / $totalLifeDays) * 100
+                                                            : 0;
+                                                    $lifeColor =
+                                                        $lifePercentage < 30
+                                                            ? 'bg-info'
+                                                            : ($lifePercentage < 70
+                                                                ? 'bg-primary'
+                                                                : 'bg-warning');
+                                                @endphp
+                                                <div class="progress-bar {{ $lifeColor }}"
+                                                    style="width: {{ min(100, $lifePercentage) }}%"></div>
+                                            </div>
+                                            <span class="progress-description">
+                                                {{ $createdDate->format('Y-m-d') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Status Information -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <h5><i class="icon fas fa-info"></i> ملخص حالة الكود:</h5>
+                                        <ul class="mb-0">
+                                            <li>
+                                                <strong>الحالة:</strong>
+                                                @if ($getRecord->coupon_status == 0)
+                                                    <span class="badge badge-success">نشط</span>
+                                                @elseif($getRecord->coupon_status == 1)
+                                                    <span class="badge badge-warning">غير نشط</span>
+                                                @else
+                                                    <span class="badge badge-danger">محذوف</span>
+                                                @endif
+                                            </li>
+                                            <li>
+                                                <strong>نسبة الخصم:</strong> {{ $getRecord->coupon_discount }}%
+                                            </li>
+                                            <li>
+                                                <strong>الفعالية:</strong>
+                                                @if ($daysRemaining > 0 && $remainingCount > 0 && $getRecord->coupon_status == 0)
+                                                    <span class="text-success">فعال ومتاح للاستخدام</span>
+                                                @elseif($daysRemaining <= 0)
+                                                    <span class="text-danger">منتهي الصلاحية</span>
+                                                @elseif($remainingCount <= 0)
+                                                    <span class="text-warning">تم استنفاد عدد مرات الاستخدام</span>
+                                                @elseif($getRecord->coupon_status != 1)
+                                                    <span class="text-secondary">غير نشط</span>
+                                                @else
+                                                    <span class="text-info">متاح</span>
+                                                @endif
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-edit mr-2"></i>
+                                تعديل بيانات كود الخصم
+                            </h3>
+                            <div class="card-tools">
+                                <a href="{{ route('admin.discount-codes.list') }}" class="btn btn-tool"
+                                    title="العودة للقائمة">
+                                    <i class="fas fa-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Form -->
+                        <form id="editDiscountCodeForm"
+                            action="{{ route('admin.discount-codes.update', $getRecord->coupon_id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+
+                            <div class="card-body">
+                                <!-- Coupon Name -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="coupon_name" class="required">
+                                                <i class="fas fa-ticket-alt mr-1"></i>
+                                                اسم كود الخصم
+                                            </label>
+                                            <input type="text"
+                                                class="form-control @error('coupon_name') is-invalid @enderror"
+                                                id="coupon_name" name="coupon_name"
+                                                value="{{ old('coupon_name', $getRecord->coupon_name) }}"
+                                                placeholder="أدخل اسم كود الخصم">
+                                            @error('coupon_name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Count and Discount Row -->
+                                <div class="row">
+                                    <!-- Usage Count -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_count" class="required">
+                                                <i class="fas fa-hashtag mr-1"></i>
+                                                عدد مرات الاستخدام
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_count') is-invalid @enderror"
+                                                id="coupon_count" name="coupon_count"
+                                                value="{{ old('coupon_count', $getRecord->coupon_count) }}"
+                                                placeholder="أدخل عدد مرات الاستخدام" min="1">
+                                            @error('coupon_count')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Discount Percentage -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_discount" class="required">
+                                                <i class="fas fa-percent mr-1"></i>
+                                                نسبة الخصم
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_discount') is-invalid @enderror"
+                                                id="coupon_discount" name="coupon_discount"
+                                                value="{{ old('coupon_discount', $getRecord->coupon_discount) }}"
+                                                placeholder="أدخل نسبة الخصم" min="0" max="100"
+                                                step="0.01">
+                                            @error('coupon_discount')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Expire Date and Status Row -->
+                                <div class="row">
+                                    <!-- Expire Date -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_expiredate" class="required">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                تاريخ ووقت انتهاء الصلاحية
+                                            </label>
+                                            <input type="datetime-local"
+                                                class="form-control @error('coupon_expiredate') is-invalid @enderror"
+                                                id="coupon_expiredate" name="coupon_expiredate"
+                                                value="{{ old('coupon_expiredate', $getRecord->coupon_expiredate ? \Carbon\Carbon::parse($getRecord->coupon_expiredate)->format('Y-m-d\TH:i') : '') }}">
+                                            @error('coupon_expiredate')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Status -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="status" class="required">
+                                                <i class="fas fa-toggle-on mr-1"></i>
+                                                حالة كود الخصم
+                                            </label>
+                                            <select class="form-control @error('status') is-invalid @enderror"
+                                                id="status" name="status">
+                                                <option value="">اختر الحالة</option>
+                                                <option value="0"
+                                                    {{ old('status', $getRecord->coupon_status) == '0' ? 'selected' : '' }}>
+                                                    نشط</option>
+                                                <option value="1"
+                                                    {{ old('status', $getRecord->coupon_status) == '1' ? 'selected' : '' }}>
+                                                    غير نشط</option>
+                                                <option value="2"
+                                                    {{ old('status', $getRecord->coupon_status) == '2' ? 'selected' : '' }}>
+                                                    محذوف</option>
+                                            </select>
+                                            @error('status')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer with Action Buttons -->
+                            <div class="card-footer">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                            <i class="fas fa-save mr-2"></i>
+                                            <span class="btn-text">تحديث كود الخصم</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <a href="{{ route('admin.discount-codes.list') }}"
+                                            class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-arrow-left mr-2"></i>
+                                            العودة للقائمة
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        $(document).ready(function() {
+            function redirectToList(message, type) {
+                window.FlashHandler.redirectWithFlash(message, type, "{{ route('admin.discount-codes.list') }}");
+            }
+
+            // Clear validation styles
+            $('body').on('input change',
+                '#coupon_name, #coupon_count, #coupon_discount, #coupon_expiredate, #status',
+                function() {
+                    $(this).removeClass('is-invalid');
+                    $(this).siblings('.invalid-feedback').remove();
+                });
+
+            $('body').on('change', '#status', function() {
+                $(this).removeClass('border-success border-warning border-danger');
+                if (this.value === '0') $(this).addClass('border-success');
+                else if (this.value === '1') $(this).addClass('border-warning');
+                else if (this.value === '2') $(this).addClass('border-danger');
+            });
+
+
+            // Prevent form submission on Enter key press (except submit button)
+            $('body').on('keypress', 'input:not([type="submit"])', function(e) {
+                if (e.which === 13) e.preventDefault();
+            });
+
+            // Keyboard shortcuts
+            $(document).on('keydown', function(e) {
+                // Ctrl+S to save
+                if (e.ctrlKey && e.which === 83) {
+                    e.preventDefault();
+                    $('#editDiscountCodeForm').submit();
+                }
+                // Escape to go back to list
+                if (e.which === 27) {
+                    window.location.href = "{{ route('admin.discount-codes.list') }}";
+                }
+            });
+
+            // Discount percentage validation (0-100)
+            $('body').on('input', '#coupon_discount', function() {
+                let value = parseFloat($(this).val());
+                if (value > 100) {
+                    $(this).val(100);
+                } else if (value < 0) {
+                    $(this).val(0);
+                }
+            });
+
+            // Usage count validation (minimum 1)
+            $('body').on('input', '#coupon_count', function() {
+                let value = parseInt($(this).val());
+                if (value < 1) {
+                    $(this).val(1);
+                }
+            });
+
+            // Discount formatting on blur
+            $('body').on('blur', '#coupon_discount', function() {
+                let value = $(this).val();
+                if (value && !isNaN(value)) {
+                    $(this).val(parseFloat(value).toFixed(2));
+                }
+            });
+
+            // Expire date validation (cannot be in the past)
+            $('body').on('change', '#coupon_expiredate', function() {
+                let selectedDate = new Date($(this).val());
+                let today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (selectedDate < today) {
+                    $(this).addClass('is-invalid');
+                    if (!$(this).siblings('.invalid-feedback').length) {
+                        $(this).after(
+                            '<div class="invalid-feedback">تاريخ انتهاء الصلاحية لا يمكن أن يكون في الماضي</div>'
+                        );
+                    }
+                } else {
+                    $(this).removeClass('is-invalid');
+                    $(this).siblings('.invalid-feedback').remove();
+                }
+            });
+        });
+    </script>
+@endsection
+
+@section('scripts')
+    <script type="text/javascript">
+        $('body').on('submit', '#editDiscountCodeForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $submitBtn = $('#submitBtn');
+            const $btnText = $submitBtn.find('.btn-text');
+
+            // Disable submit button and show loading state
+            $submitBtn.prop('disabled', true);
+            $btnText.html('جاري التحديث...');
+            $submitBtn.find('i').removeClass('fa-save').addClass('fa-spinner fa-spin');
+
+            // Fix datetime-local format before sending
+            const expireDateInput = $('#coupon_expiredate');
+            if (expireDateInput.val()) {
+                const originalValue = expireDateInput.val();
+                // Convert from "2024-12-25T14:30" to "2024-12-25 14:30:00"
+                const formattedValue = originalValue.replace('T', ' ') + ':00';
+                expireDateInput.val(formattedValue);
+            }
+
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        redirectToList(response.message, 'success');
+                    } else {
+                        window.showNotification('error', response.message);
+                        resetSubmitButton($submitBtn, $btnText);
+                        // Restore original datetime-local format
+                        if (expireDateInput.val()) {
+                            expireDateInput.val(originalValue);
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    let message = 'حدث خطأ أثناء تحديث كود الخصم';
+
+                    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                        displayErrors(xhr.responseJSON.errors);
+                        message = 'يرجى تصحيح الأخطاء المذكورة';
+                    } else if (xhr.responseJSON?.message) {
+                        message = xhr.responseJSON.message;
+                    }
+
+                    window.showNotification('error', message);
+                    resetSubmitButton($submitBtn, $btnText);
+
+                    // Restore original datetime-local format on error
+                    if (expireDateInput.val()) {
+                        expireDateInput.val(originalValue);
+                    }
+                }
+            });
+        });
+
+        function resetSubmitButton($btn, $text) {
+            $btn.prop('disabled', false);
+            $text.html('تحديث كود الخصم');
+            $btn.find('i').removeClass('fa-spinner fa-spin').addClass('fa-save');
+        }
+
+        function displayErrors(errors) {
+            console.log('displayErrors called with:', errors);
+
+            // Clear previous error states
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+
+            // Display new errors
+            for (const field in errors) {
+                console.log(`Processing field: ${field}, errors:`, errors[field]);
+                const $field = $(`#${field}`);
+                console.log(`Field element found:`, $field.length > 0, $field);
+
+                if ($field.length) {
+                    $field.addClass('is-invalid');
+                    $field.after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
+                    console.log(`Added error for ${field}:`, errors[field][0]);
+                } else {
+                    console.warn(`Field #${field} not found in DOM`);
+                }
+            }
+
+            // Scroll to first error field
+            const firstErrorField = $('.is-invalid').first();
+            if (firstErrorField.length) {
+                $('html, body').animate({
+                    scrollTop: firstErrorField.offset().top - 100
+                }, 500);
+                firstErrorField.focus();
+            }
+        }
+    </script>
+@endsection
+
+──────────────────────────────────────────────────
+
+📄 extruction.py
+──────────────────────────────────────────────────
+import os
+
+# الحصول على مسار الدليل الحالي الذي يحتوي على السكربت
+current_dir = os.path.dirname(os.path.realpath(__file__))
+
+def print_tree(directory, level=0, prefix=""):
+   """طباعة شجرة المجلدات والملفات"""
+   try:
+       items = os.listdir(directory)
+   except PermissionError:
+       print(f"{prefix} [مجلد غير قابل للوصول]")
+       return
+
+   # تصفية العناصر المخفية
+   items = [item for item in items if not item.startswith('.')]
+
+   if not items:
+       print(f"{prefix} [مجلد فارغ]")
+
+   for i, item in enumerate(items):
+       item_path = os.path.join(directory, item)
+       is_last_item = i == len(items) - 1
+       new_prefix = prefix + ("    " if is_last_item else "│   ")
+
+       if os.path.isdir(item_path):
+           print(f"{prefix}└── [{item}]")
+           print_tree(item_path, level + 1, new_prefix)
+       else:
+           print(f"{prefix}└── {item}")
+
+def write_files_content(directory, output_file, level=0):
+   """استعراض الملفات وكتابة محتوياتها في ملف نصي"""
+   try:
+       items = os.listdir(directory)
+   except PermissionError:
+       output_file.write(f"{'  ' * level}[مجلد غير قابل للوصول]: {directory}\n\n")
+       return
+
+   items = [item for item in items if not item.startswith('.')]
+   
+   for item in items:
+       item_path = os.path.join(directory, item)
+       
+       if os.path.isdir(item_path):
+           output_file.write(f"{'  ' * level}📁 [{item}]\n")
+           write_files_content(item_path, output_file, level + 1)
+       else:
+           output_file.write(f"{'  ' * level}📄 {item}\n")
+           output_file.write(f"{'  ' * level}{'─' * 50}\n")
+           
+           try:
+               with open(item_path, 'r', encoding='utf-8') as f:
+                   content = f.read()
+                   if content.strip():
+                       output_file.write(content)
+                   else:
+                       output_file.write(f"{'  ' * level}[ملف فارغ]")
+           except UnicodeDecodeError:
+               try:
+                   with open(item_path, 'r', encoding='latin-1') as f:
+                       content = f.read()
+                       output_file.write(content)
+               except:
+                   output_file.write(f"{'  ' * level}[ملف ثنائي - لا يمكن عرض المحتوى]")
+           except Exception as e:
+               output_file.write(f"{'  ' * level}[خطأ في قراءة الملف: {str(e)}]")
+           
+           output_file.write(f"\n{'  ' * level}{'─' * 50}\n\n")
+
+# طباعة شجرة المجلدات أولاً
+print("شجرة المجلدات والملفات:")
+print("=" * 50)
+print_tree(current_dir)
+print("=" * 50)
+
+# إنشاء ملف الإخراج
+output_filename = os.path.join(current_dir, "files_content.txt")
+
+print("\nجاري حفظ محتويات الملفات...")
+
+with open(output_filename, 'w', encoding='utf-8') as output:
+   output.write(f"محتويات الملفات في المجلد: {current_dir}\n")
+   output.write("=" * 80 + "\n\n")
+   write_files_content(current_dir, output)
+
+print(f"تم حفظ محتويات الملفات في: {output_filename}")
+──────────────────────────────────────────────────
+
+📄 files_content.txt
+──────────────────────────────────────────────────
+محتويات الملفات في المجلد: C:\xampp\htdocs\amper_admin\resources\views\admin\discount-codes
+================================================================================
+
+📄 add.blade.php
+──────────────────────────────────────────────────
+@extends('admin.layouts.app')
+
+@section('content')
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">{{ $header_title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">الرئيسية</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.discount-codes.list') }}">أكواد الخصم</a></li>
+                        <li class="breadcrumb-item active">إضافة كود خصم جديد</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-plus mr-2"></i>
+                                إضافة كود خصم جديد
+                            </h3>
+                            <div class="card-tools">
+                                <a href="{{ route('admin.discount-codes.list') }}" class="btn btn-tool" title="العودة للقائمة">
+                                    <i class="fas fa-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Form -->
+                        <form id="addDiscountCodeForm" action="{{ route('admin.discount-codes.store') }}"
+                            method="POST">
+                            @csrf
+
+                            <div class="card-body">
+                                <!-- Coupon Name -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="coupon_name" class="required">
+                                                <i class="fas fa-ticket-alt mr-1"></i>
+                                                اسم كود الخصم
+                                            </label>
+                                            <input type="text"
+                                                class="form-control @error('coupon_name') is-invalid @enderror"
+                                                id="coupon_name" name="coupon_name"
+                                                value="{{ old('coupon_name') }}"
+                                                placeholder="أدخل اسم كود الخصم">
+                                            @error('coupon_name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Count and Discount Row -->
+                                <div class="row">
+                                    <!-- Usage Count -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_count" class="required">
+                                                <i class="fas fa-hashtag mr-1"></i>
+                                                عدد مرات الاستخدام
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_count') is-invalid @enderror"
+                                                id="coupon_count" name="coupon_count"
+                                                value="{{ old('coupon_count') }}"
+                                                placeholder="أدخل عدد مرات الاستخدام" min="1">
+                                            @error('coupon_count')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Discount Percentage -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_discount" class="required">
+                                                <i class="fas fa-percent mr-1"></i>
+                                                نسبة الخصم
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_discount') is-invalid @enderror"
+                                                id="coupon_discount" name="coupon_discount"
+                                                value="{{ old('coupon_discount') }}"
+                                                placeholder="أدخل نسبة الخصم" min="0" max="100" step="0.01">
+                                            @error('coupon_discount')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Expire Date and Status Row -->
+                                <div class="row">
+                                    <!-- Expire Date -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_expiredate" class="required">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                تاريخ انتهاء الصلاحية
+                                            </label>
+                                            <input type="date"
+                                                class="form-control @error('coupon_expiredate') is-invalid @enderror"
+                                                id="coupon_expiredate" name="coupon_expiredate"
+                                                value="{{ old('coupon_expiredate') }}">
+                                            @error('coupon_expiredate')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Status -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="status" class="required">
+                                                <i class="fas fa-toggle-on mr-1"></i>
+                                                حالة كود الخصم
+                                            </label>
+                                            <select class="form-control @error('status') is-invalid @enderror"
+                                                id="status" name="status">
+                                                <option value="">اختر الحالة</option>
+                                                <option value="1" {{ old('status') == '1' ? 'selected' : '' }}>
+                                                    نشط</option>
+                                                <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>
+                                                    غير نشط</option>
+                                                <option value="2" {{ old('status') == '2' ? 'selected' : '' }}>
+                                                    محذوف</option>
+                                            </select>
+                                            @error('status')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer with Action Buttons -->
+                            <div class="card-footer">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                            <i class="fas fa-plus mr-2"></i>
+                                            <span class="btn-text">إضافة كود الخصم</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <a href="{{ route('admin.discount-codes.list') }}"
+                                            class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-arrow-left mr-2"></i>
+                                            العودة للقائمة
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        $(document).ready(function() {
+            function redirectToList(message, type) {
+                window.FlashHandler.redirectWithFlash(message, type, "{{ route('admin.discount-codes.list') }}");
+            }
+
+            // Clear validation styles
+            $('body').on('input change', '#coupon_name, #coupon_count, #coupon_discount, #coupon_expiredate, #status', function() {
+                $(this).removeClass('is-invalid');
+                $(this).siblings('.invalid-feedback').remove();
+            });
+
+            // Status border color
+            $('body').on('change', '#status', function() {
+                $(this).removeClass('border-success border-warning border-danger');
+                if (this.value === '1') $(this).addClass('border-success');
+                else if (this.value === '0') $(this).addClass('border-warning');
+                else if (this.value === '2') $(this).addClass('border-danger');
+            });
+
+            $('body').on('keypress', 'input:not([type="submit"])', function(e) {
+                if (e.which === 13) e.preventDefault();
+            });
+
+            // Keyboard shortcuts
+            $(document).on('keydown', function(e) {
+                if (e.ctrlKey && e.which === 83) {
+                    e.preventDefault();
+                    $('#addDiscountCodeForm').submit();
+                }
+                if (e.which === 27) {
+                    window.location.href = "{{ route('admin.discount-codes.list') }}";
+                }
+            });
+
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            $('#coupon_expiredate').attr('min', today);
+
+            // Discount formatting
+            $('body').on('blur', '#coupon_discount', function() {
+                let value = $(this).val();
+                if (value && !isNaN(value)) {
+                    $(this).val(parseFloat(value).toFixed(2));
+                }
+            });
+        });
+    </script>
+@endsection
+
+@section('scripts')
+    <script type="text/javascript">
+        $('body').on('submit', '#addDiscountCodeForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $submitBtn = $('#submitBtn');
+            const $btnText = $submitBtn.find('.btn-text');
+
+            $submitBtn.prop('disabled', true);
+            $btnText.html('جاري الإضافة...');
+            $submitBtn.find('i').removeClass('fa-plus').addClass('fa-spinner fa-spin');
+
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        redirectToList(response.message, 'success');
+                    } else {
+                        window.showNotification('error', response.message);
+                        resetSubmitButton($submitBtn, $btnText);
+                    }
+                },
+                error: function(xhr) {
+                    let message = 'حدث خطأ أثناء إضافة كود الخصم';
+                    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                        displayErrors(xhr.responseJSON.errors);
+                        message = 'يرجى تصحيح الأخطاء المذكورة';
+                    } else if (xhr.responseJSON?.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    window.showNotification('error', message);
+                    resetSubmitButton($submitBtn, $btnText);
+                }
+            });
+        });
+
+        function resetSubmitButton($btn, $text) {
+            $btn.prop('disabled', false);
+            $text.html('إضافة كود الخصم');
+            $btn.find('i').removeClass('fa-spinner fa-spin').addClass('fa-plus');
+        }
+
+        function displayErrors(errors) {
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+            for (const field in errors) {
+                const $field = $(`#${field}`);
+                if ($field.length) {
+                    $field.addClass('is-invalid');
+                    $field.after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
+                }
+            }
+        }
+    </script>
+@endsection
+──────────────────────────────────────────────────
+
+📄 edit.blade.php
+──────────────────────────────────────────────────
+@extends('admin.layouts.app')
+
+@section('content')
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">{{ $header_title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">الرئيسية</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.discount-codes.list') }}">أكواد الخصم</a></li>
+                        <li class="breadcrumb-item active">تعديل كود الخصم</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <!-- Coupon Information Cards -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                معلومات كود الخصم
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Days Remaining -->
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-info">
+                                            <i class="fas fa-clock"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">باقي على انتهاء الكود</span>
+                                            <span class="info-box-number">
+                                                @php
+                                                    $expireDate = \Carbon\Carbon::parse($getRecord->coupon_expiredate);
+                                                    $now = \Carbon\Carbon::now();
+                                                    $daysRemaining = $now->diffInDays($expireDate, false);
+
+                                                    if ($daysRemaining > 0) {
+                                                        echo $daysRemaining . ' يوم';
+                                                    } elseif ($daysRemaining == 0) {
+                                                        echo 'ينتهي اليوم';
+                                                    } else {
+                                                        echo 'منتهي الصلاحية';
+                                                    }
+                                                @endphp
+                                            </span>
+                                            <div class="progress">
+                                                @php
+                                                    $totalDays = \Carbon\Carbon::parse(
+                                                        $getRecord->created_at,
+                                                    )->diffInDays($expireDate);
+                                                    $progressPercentage =
+                                                        $totalDays > 0
+                                                            ? max(0, min(100, ($daysRemaining / $totalDays) * 100))
+                                                            : 0;
+                                                    $progressColor =
+                                                        $daysRemaining > 7
+                                                            ? 'bg-success'
+                                                            : ($daysRemaining > 3
+                                                                ? 'bg-warning'
+                                                                : 'bg-danger');
+                                                @endphp
+                                                <div class="progress-bar {{ $progressColor }}"
+                                                    style="width: {{ $progressPercentage }}%"></div>
+                                            </div>
+                                            <span class="progress-description">
+                                                {{ $expireDate->format('Y-m-d') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Usage Count -->
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-success">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">تم استخدامه</span>
+                                            <span class="info-box-number">
+                                                @php
+                                                    // Assuming you have a used_count field or relationship
+                                                    // Replace this with your actual usage count logic
+                                                    $usedCount = $getRecord->used_count ?? 0; // or count from orders table
+                                                    $totalCount = $getRecord->coupon_count;
+                                                    $remainingCount = $totalCount - $usedCount;
+                                                @endphp
+                                                {{ $usedCount }} مرة
+                                            </span>
+                                            <div class="progress">
+                                                @php
+                                                    $usagePercentage =
+                                                        $totalCount > 0 ? ($usedCount / $totalCount) * 100 : 0;
+                                                    $usageColor =
+                                                        $usagePercentage < 50
+                                                            ? 'bg-success'
+                                                            : ($usagePercentage < 80
+                                                                ? 'bg-warning'
+                                                                : 'bg-danger');
+                                                @endphp
+                                                <div class="progress-bar {{ $usageColor }}"
+                                                    style="width: {{ $usagePercentage }}%"></div>
+                                            </div>
+                                            <span class="progress-description">
+                                                متبقي {{ $remainingCount }} من {{ $totalCount }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Days Since Creation -->
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-warning">
+                                            <i class="fas fa-calendar-plus"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">مر على إطلاقه</span>
+                                            <span class="info-box-number">
+                                                @php
+                                                    $createdDate = \Carbon\Carbon::parse($getRecord->created_at);
+                                                    $daysSinceCreation = $createdDate->diffInDays($now);
+
+                                                    if ($daysSinceCreation == 0) {
+                                                        echo 'اليوم';
+                                                    } elseif ($daysSinceCreation == 1) {
+                                                        echo 'يوم واحد';
+                                                    } elseif ($daysSinceCreation == 2) {
+                                                        echo 'يومان';
+                                                    } elseif ($daysSinceCreation < 11) {
+                                                        echo $daysSinceCreation . ' أيام';
+                                                    } else {
+                                                        echo $daysSinceCreation . ' يوم';
+                                                    }
+                                                @endphp
+                                            </span>
+                                            <div class="progress">
+                                                @php
+                                                    $totalLifeDays = $createdDate->diffInDays($expireDate);
+                                                    $lifePercentage =
+                                                        $totalLifeDays > 0
+                                                            ? ($daysSinceCreation / $totalLifeDays) * 100
+                                                            : 0;
+                                                    $lifeColor =
+                                                        $lifePercentage < 30
+                                                            ? 'bg-info'
+                                                            : ($lifePercentage < 70
+                                                                ? 'bg-primary'
+                                                                : 'bg-warning');
+                                                @endphp
+                                                <div class="progress-bar {{ $lifeColor }}"
+                                                    style="width: {{ min(100, $lifePercentage) }}%"></div>
+                                            </div>
+                                            <span class="progress-description">
+                                                {{ $createdDate->format('Y-m-d') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Status Information -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <h5><i class="icon fas fa-info"></i> ملخص حالة الكود:</h5>
+                                        <ul class="mb-0">
+                                            <li>
+                                                <strong>الحالة:</strong>
+                                                @if ($getRecord->coupon_status == 0)
+                                                    <span class="badge badge-success">نشط</span>
+                                                @elseif($getRecord->coupon_status == 1)
+                                                    <span class="badge badge-warning">غير نشط</span>
+                                                @else
+                                                    <span class="badge badge-danger">محذوف</span>
+                                                @endif
+                                            </li>
+                                            <li>
+                                                <strong>نسبة الخصم:</strong> {{ $getRecord->coupon_discount }}%
+                                            </li>
+                                            <li>
+                                                <strong>الفعالية:</strong>
+                                                @if ($daysRemaining > 0 && $remainingCount > 0 && $getRecord->coupon_status == 0)
+                                                    <span class="text-success">فعال ومتاح للاستخدام</span>
+                                                @elseif($daysRemaining <= 0)
+                                                    <span class="text-danger">منتهي الصلاحية</span>
+                                                @elseif($remainingCount <= 0)
+                                                    <span class="text-warning">تم استنفاد عدد مرات الاستخدام</span>
+                                                @elseif($getRecord->coupon_status != 1)
+                                                    <span class="text-secondary">غير نشط</span>
+                                                @else
+                                                    <span class="text-info">متاح</span>
+                                                @endif
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-edit mr-2"></i>
+                                تعديل بيانات كود الخصم
+                            </h3>
+                            <div class="card-tools">
+                                <a href="{{ route('admin.discount-codes.list') }}" class="btn btn-tool"
+                                    title="العودة للقائمة">
+                                    <i class="fas fa-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Form -->
+                        <form id="editDiscountCodeForm"
+                            action="{{ route('admin.discount-codes.update', $getRecord->coupon_id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+
+                            <div class="card-body">
+                                <!-- Coupon Name -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="coupon_name" class="required">
+                                                <i class="fas fa-ticket-alt mr-1"></i>
+                                                اسم كود الخصم
+                                            </label>
+                                            <input type="text"
+                                                class="form-control @error('coupon_name') is-invalid @enderror"
+                                                id="coupon_name" name="coupon_name"
+                                                value="{{ old('coupon_name', $getRecord->coupon_name) }}"
+                                                placeholder="أدخل اسم كود الخصم">
+                                            @error('coupon_name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Count and Discount Row -->
+                                <div class="row">
+                                    <!-- Usage Count -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_count" class="required">
+                                                <i class="fas fa-hashtag mr-1"></i>
+                                                عدد مرات الاستخدام
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_count') is-invalid @enderror"
+                                                id="coupon_count" name="coupon_count"
+                                                value="{{ old('coupon_count', $getRecord->coupon_count) }}"
+                                                placeholder="أدخل عدد مرات الاستخدام" min="1">
+                                            @error('coupon_count')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Discount Percentage -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_discount" class="required">
+                                                <i class="fas fa-percent mr-1"></i>
+                                                نسبة الخصم
+                                            </label>
+                                            <input type="number"
+                                                class="form-control @error('coupon_discount') is-invalid @enderror"
+                                                id="coupon_discount" name="coupon_discount"
+                                                value="{{ old('coupon_discount', $getRecord->coupon_discount) }}"
+                                                placeholder="أدخل نسبة الخصم" min="0" max="100"
+                                                step="0.01">
+                                            @error('coupon_discount')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Expire Date and Status Row -->
+                                <div class="row">
+                                    <!-- Expire Date -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="coupon_expiredate" class="required">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                تاريخ ووقت انتهاء الصلاحية
+                                            </label>
+                                            <input type="datetime-local"
+                                                class="form-control @error('coupon_expiredate') is-invalid @enderror"
+                                                id="coupon_expiredate" name="coupon_expiredate"
+                                                value="{{ old('coupon_expiredate', $getRecord->coupon_expiredate ? \Carbon\Carbon::parse($getRecord->coupon_expiredate)->format('Y-m-d\TH:i') : '') }}">
+                                            @error('coupon_expiredate')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <!-- Status -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="status" class="required">
+                                                <i class="fas fa-toggle-on mr-1"></i>
+                                                حالة كود الخصم
+                                            </label>
+                                            <select class="form-control @error('status') is-invalid @enderror"
+                                                id="status" name="status">
+                                                <option value="">اختر الحالة</option>
+                                                <option value="0"
+                                                    {{ old('status', $getRecord->coupon_status) == '0' ? 'selected' : '' }}>
+                                                    نشط</option>
+                                                <option value="1"
+                                                    {{ old('status', $getRecord->coupon_status) == '1' ? 'selected' : '' }}>
+                                                    غير نشط</option>
+                                                <option value="2"
+                                                    {{ old('status', $getRecord->coupon_status) == '2' ? 'selected' : '' }}>
+                                                    محذوف</option>
+                                            </select>
+                                            @error('status')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer with Action Buttons -->
+                            <div class="card-footer">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                            <i class="fas fa-save mr-2"></i>
+                                            <span class="btn-text">تحديث كود الخصم</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <a href="{{ route('admin.discount-codes.list') }}"
+                                            class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-arrow-left mr-2"></i>
+                                            العودة للقائمة
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        $(document).ready(function() {
+            function redirectToList(message, type) {
+                window.FlashHandler.redirectWithFlash(message, type, "{{ route('admin.discount-codes.list') }}");
+            }
+
+            // Clear validation styles
+            $('body').on('input change',
+                '#coupon_name, #coupon_count, #coupon_discount, #coupon_expiredate, #status',
+                function() {
+                    $(this).removeClass('is-invalid');
+                    $(this).siblings('.invalid-feedback').remove();
+                });
+
+            $('body').on('change', '#status', function() {
+                $(this).removeClass('border-success border-warning border-danger');
+                if (this.value === '0') $(this).addClass('border-success');
+                else if (this.value === '1') $(this).addClass('border-warning');
+                else if (this.value === '2') $(this).addClass('border-danger');
+            });
+
+
+            // Prevent form submission on Enter key press (except submit button)
+            $('body').on('keypress', 'input:not([type="submit"])', function(e) {
+                if (e.which === 13) e.preventDefault();
+            });
+
+            // Keyboard shortcuts
+            $(document).on('keydown', function(e) {
+                // Ctrl+S to save
+                if (e.ctrlKey && e.which === 83) {
+                    e.preventDefault();
+                    $('#editDiscountCodeForm').submit();
+                }
+                // Escape to go back to list
+                if (e.which === 27) {
+                    window.location.href = "{{ route('admin.discount-codes.list') }}";
+                }
+            });
+
+            // Discount percentage validation (0-100)
+            $('body').on('input', '#coupon_discount', function() {
+                let value = parseFloat($(this).val());
+                if (value > 100) {
+                    $(this).val(100);
+                } else if (value < 0) {
+                    $(this).val(0);
+                }
+            });
+
+            // Usage count validation (minimum 1)
+            $('body').on('input', '#coupon_count', function() {
+                let value = parseInt($(this).val());
+                if (value < 1) {
+                    $(this).val(1);
+                }
+            });
+
+            // Discount formatting on blur
+            $('body').on('blur', '#coupon_discount', function() {
+                let value = $(this).val();
+                if (value && !isNaN(value)) {
+                    $(this).val(parseFloat(value).toFixed(2));
+                }
+            });
+
+            // Expire date validation (cannot be in the past)
+            $('body').on('change', '#coupon_expiredate', function() {
+                let selectedDate = new Date($(this).val());
+                let today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (selectedDate < today) {
+                    $(this).addClass('is-invalid');
+                    if (!$(this).siblings('.invalid-feedback').length) {
+                        $(this).after(
+                            '<div class="invalid-feedback">تاريخ انتهاء الصلاحية لا يمكن أن يكون في الماضي</div>'
+                        );
+                    }
+                } else {
+                    $(this).removeClass('is-invalid');
+                    $(this).siblings('.invalid-feedback').remove();
+                }
+            });
+        });
+    </script>
+@endsection
+
+@section('scripts')
+    <script type="text/javascript">
+        $('body').on('submit', '#editDiscountCodeForm', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $submitBtn = $('#submitBtn');
+            const $btnText = $submitBtn.find('.btn-text');
+
+            // Disable submit button and show loading state
+            $submitBtn.prop('disabled', true);
+            $btnText.html('جاري التحديث...');
+            $submitBtn.find('i').removeClass('fa-save').addClass('fa-spinner fa-spin');
+
+            // Fix datetime-local format before sending
+            const expireDateInput = $('#coupon_expiredate');
+            if (expireDateInput.val()) {
+                const originalValue = expireDateInput.val();
+                // Convert from "2024-12-25T14:30" to "2024-12-25 14:30:00"
+                const formattedValue = originalValue.replace('T', ' ') + ':00';
+                expireDateInput.val(formattedValue);
+            }
+
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        redirectToList(response.message, 'success');
+                    } else {
+                        window.showNotification('error', response.message);
+                        resetSubmitButton($submitBtn, $btnText);
+                        // Restore original datetime-local format
+                        if (expireDateInput.val()) {
+                            expireDateInput.val(originalValue);
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    let message = 'حدث خطأ أثناء تحديث كود الخصم';
+
+                    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                        displayErrors(xhr.responseJSON.errors);
+                        message = 'يرجى تصحيح الأخطاء المذكورة';
+                    } else if (xhr.responseJSON?.message) {
+                        message = xhr.responseJSON.message;
+                    }
+
+                    window.showNotification('error', message);
+                    resetSubmitButton($submitBtn, $btnText);
+
+                    // Restore original datetime-local format on error
+                    if (expireDateInput.val()) {
+                        expireDateInput.val(originalValue);
+                    }
+                }
+            });
+        });
+
+        function resetSubmitButton($btn, $text) {
+            $btn.prop('disabled', false);
+            $text.html('تحديث كود الخصم');
+            $btn.find('i').removeClass('fa-spinner fa-spin').addClass('fa-save');
+        }
+
+        function displayErrors(errors) {
+            console.log('displayErrors called with:', errors);
+
+            // Clear previous error states
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+
+            // Display new errors
+            for (const field in errors) {
+                console.log(`Processing field: ${field}, errors:`, errors[field]);
+                const $field = $(`#${field}`);
+                console.log(`Field element found:`, $field.length > 0, $field);
+
+                if ($field.length) {
+                    $field.addClass('is-invalid');
+                    $field.after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
+                    console.log(`Added error for ${field}:`, errors[field][0]);
+                } else {
+                    console.warn(`Field #${field} not found in DOM`);
+                }
+            }
+
+            // Scroll to first error field
+            const firstErrorField = $('.is-invalid').first();
+            if (firstErrorField.length) {
+                $('html, body').animate({
+                    scrollTop: firstErrorField.offset().top - 100
+                }, 500);
+                firstErrorField.focus();
+            }
+        }
+    </script>
+@endsection
+
+──────────────────────────────────────────────────
+
+📄 list.blade.php
+──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/list.blade.php --}}
+
+
+@extends('admin.layouts.app')
+
+@section('content')
+    @include('admin.partials.page-header', [
+        'title' => 'قائمة أكواد الخصم',
+        'createRoute' => route('admin.discount-codes.create'),
+        'createButtonText' => 'إضافة كود خصم جديد',
+    ])
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    @include('admin.discount-codes.partials.search-form')
+                    @include('admin.discount-codes.partials.data-table', ['records' => $getRecord])
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+
+@section('script')
+    @include('admin.discount-codes.partials.scripts')
+@endsection
+
+──────────────────────────────────────────────────
+
+📁 [partials]
+  📄 action-buttons.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/action-buttons.blade.php --}}
+@include('admin.partials.form-fields.table-action-buttons', [
+    'record' => $record,
+    'idField' => 'coupon_id',
+    'statusField' => 'coupon_status',
+    'editRoute' => route('admin.discount-codes.edit', $record->coupon_id),
+])
+
+  ──────────────────────────────────────────────────
+
+  📄 data-table.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/data-table.blade.php --}}
+<div class="card card-info">
+    <div class="card-header">
+        <h3 class="card-title">قائمة أكواد الخصم (المجموع: {{ $records->total() }})</h3>
+    </div>
+    <div id="table-container">
+        <div class="card-body p-0">
+            {{-- Desktop Table --}}
+            @include('admin.discount-codes.partials.desktop-table', ['records' => $records])
+
+            {{-- Mobile Cards --}}
+            @include('admin.discount-codes.partials.mobile-cards', ['records' => $records])
+
+            {{-- Pagination --}}
+            @include('admin.partials.pagination', ['records' => $records])
+        </div>
+    </div>
+</div>
+
+  ──────────────────────────────────────────────────
+
+  📄 desktop-table.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/desktop-table.blade.php --}}
+<div class="d-none d-lg-block">
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered mb-0">
+            <thead class="text-center bg-light">
+                <tr>
+                    <th>#</th>
+                    <th>اسم الكود</th>
+                    <th>نسبة الخصم</th>
+                    <th>عدد مرات الاستخدام</th>
+                    <th>تاريخ الانتهاء</th>
+                    <th>الحالة</th>
+                    <th>الإجراء</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                @forelse ($records as $record)
+                    @php
+                        $expiryData = app('App\Services\CouponExpiryService')->getExpiryData($record->coupon_expiredate,$record->coupon_status);
+                        $discountData = app('App\Services\DiscountBadgeService')->getBadgeData($record->coupon_discount);
+                    @endphp
+                    <tr>
+                        <td>{{ $record->coupon_id }}</td>
+                        <td>
+                            <span class="font-weight-bold text-primary">{{ $record->coupon_name }}</span>
+                        </td>
+                        <td>
+                            @include('admin.discount-codes.partials.discount-badge', ['discountData' => $discountData])
+                        </td>
+                        <td>
+                            @include('admin.discount-codes.partials.usage-count', ['count' => $record->coupon_count])
+                        </td>
+                        <td>
+                            @include('admin.discount-codes.partials.expiry-date', ['expiryData' => $expiryData])
+                        </td>
+                        <td>
+                            @include('admin.discount-codes.partials.status-badge', ['expiryData' => $expiryData])
+                        </td>
+                        <td>
+                            @include('admin.discount-codes.partials.action-buttons', ['record' => $record])
+                        </td>
+                    </tr>
+                @empty
+                    @include('admin.partials.no-data', [
+                        'colspan' => 7,
+                        'icon' => 'fas fa-ticket-alt',
+                        'message' => 'لا توجد أكواد خصم متاحة حالياً.'
+                    ])
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+  ──────────────────────────────────────────────────
+
+  📄 discount-badge.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/discount-badge.blade.php --}}
+<div class="discount-wrapper">
+    <span class="badge {{ $discountData['badgeClass'] }} discount-badge">
+        <div class="discount-content">
+            <span class="discount-icon">{{ $discountData['icon'] }}</span>
+            <span class="discount-value">{{ $discountData['discount'] }}%</span>
+        </div>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+
+  ──────────────────────────────────────────────────
+
+  📄 expiry-date.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/expiry-date.blade.php --}}
+<div class="expiry-info">
+    <div class="expiry-date">{{ $expiryData['formattedDate'] }}</div>
+    @if(!$expiryData['isExpired'] && $expiryData['daysLeft'] > 0)
+        <small class="text-muted">
+            {{ $expiryData['daysLeft'] }}
+            {{ $expiryData['daysLeft'] == 1 ? 'يوم' : 'أيام' }} متبقية
+        </small>
+    @endif
+</div>
+  ──────────────────────────────────────────────────
+
+  📄 mobile-card-body.blade.php
+  ──────────────────────────────────────────────────
+
+{{-- resources/views/admin/discount-codes/partials/mobile-card-body.blade.php --}}
+<div class="row mt-2">
+    <div class="col-6">
+        <span class="badge {{ $discountData['badgeClass'] }} discount-badge-mobile">
+            <span class="discount-icon">{{ $discountData['icon'] }}</span>
+            <span class="discount-value">{{ $discountData['discount'] }}%</span>
+        </span>
+    </div>
+    <div class="col-6 text-right">
+        <span class="badge badge-info">
+            <i class="fas fa-repeat mr-1"></i>{{ $count }}
+        </span>
+    </div>
+</div>
+  ──────────────────────────────────────────────────
+
+  📄 mobile-card-header.blade.php
+  ──────────────────────────────────────────────────
+
+{{-- resources/views/admin/discount-codes/partials/mobile-card-header.blade.php --}}
+<div class="row">
+    <div class="col-8">
+        <h6 class="card-title mb-1 text-primary font-weight-bold">{{ $record->coupon_name }}</h6>
+        <p class="text-muted small mb-1">
+            <i class="fas fa-hashtag"></i> {{ $record->coupon_id }}
+        </p>
+        <p class="text-muted small mb-0">
+            <i class="fas fa-calendar"></i> {{ $expiryData['formattedDate'] }}
+        </p>
+    </div>
+    <div class="col-4 text-right">
+        <span class="badge {{ $expiryData['statusClass'] }} d-block mb-1">
+            <i class="{{ $expiryData['statusIcon'] }}"></i> {{ $expiryData['statusText'] }}
+        </span>
+    </div>
+</div>
+  ──────────────────────────────────────────────────
+
+  📄 mobile-cards.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/mobile-cards.blade.php --}}
+<div class="d-lg-none">
+    @forelse ($records as $record)
+        @php
+            $expiryData = app('App\Services\CouponExpiryService')->getExpiryData(
+                $record->coupon_expiredate,
+                $record->coupon_status,
+            );
+            $discountData = app('App\Services\DiscountBadgeService')->getBadgeData($record->coupon_discount);
+        @endphp
+        <div class="card mb-3 mx-3">
+            <div class="card-body">
+                @include('admin.discount-codes.partials.mobile-card-header', [
+                    'record' => $record,
+                    'expiryData' => $expiryData,
+                ])
+
+                @include('admin.discount-codes.partials.mobile-card-body', [
+                    'discountData' => $discountData,
+                    'count' => $record->coupon_count,
+                ])
+
+                @include('admin.discount-codes.partials.action-buttons', ['record' => $record])
+            </div>
+        </div>
+    @empty
+        @include('admin.partials.no-data', [
+            'icon' => 'fas fa-ticket-alt',
+            'message' => 'لا توجد أكواد خصم متاحة حالياً.',
+            'wrapperClass' => 'text-center py-5',
+        ])
+    @endforelse
+</div>
+
+  ──────────────────────────────────────────────────
+
+  📄 scripts.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/scripts.blade.php --}}
+
+
+@include('admin.partials.scripts.generic-table-manager')
+<script type="text/javascript">
+    $(document).ready(() => {
+        const discountCodeManager = new GenericTableManager({
+            baseDeleteUrl: "{{ url('admin/discount-codes/delete') }}",
+            baseRestoreUrl: "{{ url('admin/discount-codes/restore') }}",
+            deleteButtonClass: '.btnDelete',
+            tableContainerSelector: '#table-container',
+            confirmMessage: 'هل أنت متأكد من الحذف؟',
+            confirmRestoreMessage: 'هل أنت متأكد من الاستعادة؟',
+            confirmTitle: 'تأكيد العملية',
+            loadingText: '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...',
+            defaultButtonText: '<i class="fas fa-trash"></i>',
+            successMessage: 'تمت العملية بنجاح',
+            errorPrefix: 'حدث خطأ: ',
+            connectionErrorPrefix: 'حدث خطأ أثناء الاتصال بالخادم: ',
+            deleteFailedMessage: 'فشل أثناء الحذف'
+        });
+    });
+</script>
+
+  ──────────────────────────────────────────────────
+
+  📄 search-form.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/search-form.blade.php --}}
+<form action="" method="get">
+    <div class="card card-info">
+        <div class="card-header">
+            <h3 class="card-title">البحث في أكواد الخصم</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                @include('admin.partials.form-fields.number-input', [
+                    'name'       => 'coupon_id',
+                    'label'      => 'المعرّف',
+                    'placeholder'=> 'معرّف الكود',
+                    'colClass'   => 'col-lg-2 col-md-4 col-sm-6 col-12',
+                ])
+
+                @include('admin.partials.form-fields.text-input', [
+                    'name'       => 'coupon_name',
+                    'label'      => 'اسم الكود',
+                    'placeholder'=> 'اسم كود الخصم',
+                    'colClass'   => 'col-lg-3 col-md-4 col-sm-6 col-12',
+                ])
+
+                {{-- الحالة --}}
+                @include('admin.partials.form-fields.select-input', [
+                    'name'     => 'status',
+                    'label'    => 'الحالة',
+                    'options'  => [
+                        ''          => 'جميع الحالات',
+                        'active'    => 'نشط',
+                        'expired'   => 'منتهي الصلاحية',
+                        'inactive'  => 'غير نشط',
+                        'deleted'   => 'محذوف',
+                    ],
+                    'colClass' => 'col-lg-2 col-md-4 col-sm-6 col-12',
+                ])
+
+                @include('admin.partials.form-fields.number-input', [
+                    'name'       => 'discount_min',
+                    'label'      => 'نسبة الخصم من',
+                    'placeholder'=> '0',
+                    'min'        => 0,
+                    'max'        => 100,
+                    'step'       => 0.1,
+                    'colClass'   => 'col-lg-2 col-md-4 col-sm-6 col-12',
+                ])
+
+                @include('admin.partials.form-fields.number-input', [
+                    'name'       => 'discount_max',
+                    'label'      => 'نسبة الخصم إلى',
+                    'placeholder'=> '100',
+                    'min'        => 0,
+                    'max'        => 100,
+                    'step'       => 0.1,
+                    'colClass'   => 'col-lg-2 col-md-4 col-sm-6 col-12',
+                ])
+
+                @include('admin.partials.form-fields.action-buttons', [
+                    'searchRoute'=> null,
+                    'resetRoute' => route('admin.discount-codes.list'),
+                    'colClass'   => 'col-lg-1 col-md-4 col-sm-6 col-4',
+                ])
+            </div>
+        </div>
+    </div>
+</form>
+
+  ──────────────────────────────────────────────────
+
+  📄 status-badge.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/status-badge.blade.php --}}
+<span class="badge {{ $expiryData['statusClass'] }} px-3 py-2">
+    <i class="{{ $expiryData['statusIcon'] }} mr-1"></i>{{ $expiryData['statusText'] }}
+</span>
+
+  ──────────────────────────────────────────────────
+
+  📄 usage-count.blade.php
+  ──────────────────────────────────────────────────
+{{-- resources/views/admin/discount-codes/partials/usage-count.blade.php --}}
+<span class="badge badge-info px-3 py-2">
+    <i class="fas fa-repeat mr-1"></i>{{ $count }}
+</span>
+  ──────────────────────────────────────────────────
+

@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ShippingChargeController;
 use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\SubServiceController;
+use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -183,6 +184,8 @@ Route::prefix('admin')->name('admin.')->middleware('isAdmin')->group(function ()
         Route::get('{id}/edit', [CarMakesController::class, 'edit'])->name('edit');
         Route::put('{id}', [CarMakesController::class, 'update'])->name('update');
         Route::post('delete/{id}', [CarMakesController::class, 'delete'])->name('delete');
+        Route::post('restore/{id}', [CarMakesController::class, 'restore'])->name('restore');
+
 
     });
 
@@ -194,6 +197,8 @@ Route::prefix('admin')->name('admin.')->middleware('isAdmin')->group(function ()
         Route::get('{id}/edit', [CarModelsController::class, 'edit'])->name('edit');
         Route::put('{id}', [CarModelsController::class, 'update'])->name('update');
         Route::post('delete/{id}', [CarModelsController::class, 'delete'])->name('delete');
+        Route::post('restore/{id}', [CarModelsController::class, 'restore'])->name('restore');
+
 
     });
 
@@ -295,17 +300,20 @@ Route::prefix('admin')->name('admin.')->middleware('isAdmin')->group(function ()
         Route::patch('{id}/toggle-status', [ShippingChargeController::class, 'toggleStatus'])->name('toggle-status');
     });
 
-    // Partners
-    Route::prefix('partners')->name('partner.')->group(function () {
-        Route::get('/', [PartnerController::class, 'list'])->name('list');
-        Route::get('create', [PartnerController::class, 'add'])->name('create');
-        Route::post('store', [PartnerController::class, 'insert'])->name('store');
-        Route::get('{id}/edit', [PartnerController::class, 'edit'])->name('edit');
-        Route::put('{id}', [PartnerController::class, 'update'])->name('update');
-        Route::delete('{id}', [PartnerController::class, 'delete'])->name('delete');
-        Route::patch('{id}/toggle-status', [PartnerController::class, 'toggleStatus'])->name('toggle-status');
-        Route::post('reorder', [PartnerController::class, 'reorder'])->name('reorder');
+    // Vendors
+     Route::prefix('vendors')->name('vendor.')->group(function () {
+        Route::get('/', [VendorController::class, 'list'])->name('list');
+        Route::get('create', [VendorController::class, 'add'])->name('create');
+        Route::post('store', [VendorController::class, 'insert'])->name('store');
+        Route::get('{id}/edit', [VendorController::class, 'edit'])->name('edit');
+        Route::put('{id}', [VendorController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [VendorController::class, 'delete'])->name('delete');
+        Route::post('restore/{id}', [VendorController::class, 'restore'])->name('restore');
+
+
     });
+
+
 
     // Contact Messages
     Route::prefix('contact')->name('contact.')->group(function () {

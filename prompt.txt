@@ -1,0 +1,8 @@
+make resources\views\admin\   files fit with with contorllers , models and   file 
+and use reusable components and everything you need  in resources\views\admin\partials 
+
+or you can Separate thim like  resources\views\admin\discount-codes structure
+
+note : I want you to fix and edit and modfy use the reusable things in resources\views\admin\partials 
+
+just do that , nothing else ...
